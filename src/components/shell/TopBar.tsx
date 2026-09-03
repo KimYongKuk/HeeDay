@@ -1,24 +1,17 @@
 'use client';
 
 import { Plus, Search } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { openCommandPalette } from '@/components/shell/CommandPalette';
+import { Logo } from '@/components/shell/Logo';
 
 export function TopBar() {
   return (
     <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-app px-5 print:hidden">
       <Link href="/calendar" className="flex w-[196px] items-center">
-        <Image
-          src="/logo-wide.png"
-          alt="달성군남부노인복지관"
-          width={1860}
-          height={296}
-          priority
-          className="h-[30px] w-auto"
-        />
+        <Logo />
       </Link>
-      <span className="text-[13px] font-semibold tracking-[-0.01em] text-ink-muted">HeeDay</span>
+      <span className="text-[13px] text-ink-muted">달성군남부노인복지관</span>
       <div className="flex-1" />
       <button
         type="button"
