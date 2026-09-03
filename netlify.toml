@@ -1,0 +1,10 @@
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PNPM_FLAGS = "--frozen-lockfile"
+
+# Netlify's Next.js runtime is enabled automatically for Next.js projects.
+# Set DATABASE_URL and DATABASE_SSL=1 in Site settings → Environment variables.

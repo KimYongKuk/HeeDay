@@ -1,0 +1,212 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans KR", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; color: #1b1a18; background: #f4f3f0; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum"; }
+    a { color: #4b5bd6; } a:hover { color: #3a47ad; }
+    .nav { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: 8px; font-size: 13.5px; color: #4d4b46; }
+    .nav.on { background: #ffffff; color: #1b1a18; font-weight: 500; box-shadow: 0 1px 2px rgba(20,18,12,0.06); }
+    .wk { display: flex; align-items: center; padding-left: 8px; font-size: 11.5px; font-weight: 500; color: #8b8983; border-left: 1px solid #efede8; }
+    .prow { display: grid; grid-template-columns: 220px minmax(0, 1fr); height: 84px; border-bottom: 1px solid #e7e5e0; }
+    .plab { padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; border-right: 1px solid #e7e5e0; }
+    .plab .n { font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .plab .s { font-size: 11.5px; color: #8b8983; padding-left: 16px; }
+    .track { position: relative; background-image: linear-gradient(to right, #efede8 1px, transparent 1px); background-size: 12.5% 100%; }
+    .seg { position: absolute; top: 24px; height: 22px; border-radius: 6px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; }
+    .ms { position: absolute; top: 30px; width: 10px; height: 10px; border-radius: 50%; background: #ffffff; border: 2px solid; margin-left: -5px; box-sizing: border-box; }
+    .tk { position: absolute; top: 56px; display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: #6b6963; white-space: nowrap; margin-left: -4px; }
+    .tk i { width: 8px; height: 8px; border-radius: 2px; transform: rotate(45deg); display: block; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; display: flex; flex-direction: column; background: #f4f3f0; overflow: hidden;">
+
+  <!-- top bar -->
+  <div style="height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 20px; border-bottom: 1px solid #e7e5e0; background: #f4f3f0;">
+    <div style="display: flex; align-items: center; gap: 10px; width: 196px;">
+      <div style="width: 26px; height: 26px; border-radius: 8px; background: #4b5bd6; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+      </div>
+      <div style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em;">HeeDay</div>
+    </div>
+    <div style="font-size: 13px; color: #6b6963; display: flex; align-items: center; gap: 6px;">
+      <span>달성군남부노인복지관</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+    </div>
+    <div style="flex: 1;"></div>
+    <div style="display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; width: 240px; border-radius: 8px; background: #ffffff; border: 1px solid #e7e5e0; color: #8b8983; font-size: 13px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <span style="flex: 1;">검색 또는 명령</span>
+      <span style="font-size: 11px; padding: 2px 5px; border-radius: 4px; background: #f4f3f0; color: #8b8983;">⌘K</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px 0 10px; border-radius: 8px; background: #1b1a18; color: #ffffff; font-size: 13.5px; font-weight: 500;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
+      <span>일정 등록</span>
+    </div>
+    <div style="width: 30px; height: 30px; border-radius: 50%; background: #dfe3f7; color: #3a47ad; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center;">김</div>
+  </div>
+
+  <div style="flex: 1; display: flex; min-height: 0;">
+
+    <!-- left nav -->
+    <div style="width: 216px; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid #e7e5e0;">
+      <div class="nav on">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+        <span>캘린더</span>
+      </div>
+      <div class="nav">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M3 10h18M9 10v10"></path></svg>
+        <span>프로그램 양식</span>
+      </div>
+      <div class="nav">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"></path><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"></path></svg>
+        <span>할 일 목록</span>
+      </div>
+      <div class="nav">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9l8-5 8 5v11"></path><path d="M9 20v-6h6v6"></path></svg>
+        <span>휴관일</span>
+      </div>
+      <div style="flex: 1;"></div>
+      <div class="nav">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h8M18 6h2M4 12h4M12 12h8M4 18h10M20 18h0"></path><circle cx="15" cy="6" r="2"></circle><circle cx="9" cy="12" r="2"></circle><circle cx="17" cy="18" r="2"></circle></svg>
+        <span>설정</span>
+      </div>
+    </div>
+
+    <!-- main -->
+    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+      <div style="height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 20px;">
+        <div style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em;">2026년 5월 – 7월</div>
+        <div style="display: flex; align-items: center; gap: 2px; margin-left: 4px;">
+          <div style="width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6b6963;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg></div>
+          <div style="width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6b6963;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></div>
+        </div>
+        <div style="height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid #e7e5e0; background: #ffffff; font-size: 12.5px; font-weight: 500; display: flex; align-items: center; color: #4d4b46;">오늘</div>
+        <div style="flex: 1;"></div>
+        <div style="display: flex; align-items: center; gap: 14px; font-size: 11.5px; color: #6b6963;">
+          <div style="display: flex; align-items: center; gap: 5px;"><div style="width: 14px; height: 8px; border-radius: 3px; background: #e7e5e0;"></div><span>준비 · 정리</span></div>
+          <div style="display: flex; align-items: center; gap: 5px;"><div style="width: 14px; height: 8px; border-radius: 3px; background: #6b6963;"></div><span>진행</span></div>
+          <div style="display: flex; align-items: center; gap: 5px;"><div style="width: 8px; height: 8px; border-radius: 50%; background: #ffffff; border: 2px solid #6b6963; box-sizing: border-box;"></div><span>회차</span></div>
+          <div style="display: flex; align-items: center; gap: 5px;"><i style="width: 7px; height: 7px; border-radius: 2px; transform: rotate(45deg); display: block; background: #6b6963;"></i><span>할 일</span></div>
+        </div>
+        <div style="display: flex; align-items: center; height: 30px; padding: 2px; border-radius: 8px; background: #e9e7e2; font-size: 12.5px; font-weight: 500;">
+          <div style="height: 26px; padding: 0 12px; display: flex; align-items: center; color: #6b6963;">월</div>
+          <div style="height: 26px; padding: 0 12px; display: flex; align-items: center; color: #6b6963;">주</div>
+          <div style="height: 26px; padding: 0 12px; border-radius: 6px; background: #ffffff; display: flex; align-items: center; box-shadow: 0 1px 2px rgba(20,18,12,0.08);">타임라인</div>
+        </div>
+      </div>
+
+      <div style="flex: 1; border-top: 1px solid #e7e5e0; background: #ffffff; display: flex; flex-direction: column; min-height: 0; position: relative;">
+        <!-- header row -->
+        <div style="display: grid; grid-template-columns: 220px minmax(0, 1fr); height: 40px; border-bottom: 1px solid #e7e5e0;">
+          <div style="display: flex; align-items: center; padding-left: 16px; font-size: 11.5px; font-weight: 500; color: #8b8983; border-right: 1px solid #e7e5e0;">프로그램 4</div>
+          <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr));">
+            <div class="wk">5월 18일</div>
+            <div class="wk">5월 25일</div>
+            <div class="wk" style="color: #1b1a18; font-weight: 600;">6월 1일</div>
+            <div class="wk">6월 8일</div>
+            <div class="wk">6월 15일</div>
+            <div class="wk">6월 22일</div>
+            <div class="wk">6월 29일</div>
+            <div class="wk" style="color: #1b1a18; font-weight: 600;">7월 6일</div>
+          </div>
+        </div>
+
+        <!-- row: 웰다잉 -->
+        <div class="prow">
+          <div class="plab">
+            <div class="n"><div class="dot" style="background: #e26b82;"></div><span>웰다잉 프로그램</span></div>
+            <div class="s">6/2 – 7/7 · 화요일 6회</div>
+            <div class="s">담당 김○○</div>
+          </div>
+          <div class="track">
+            <div class="seg" style="left: 0%; width: 26.79%; background: #fbe7ea; color: #a12c42; border-radius: 0 6px 6px 0;">준비</div>
+            <div class="seg" style="left: 26.79%; width: 64.29%; background: #e26b82; color: #ffffff;">진행 · 6회</div>
+            <div class="seg" style="left: 91.07%; width: 8.93%; background: #fbe7ea; color: #a12c42; border-radius: 6px 0 0 6px;">정리</div>
+            <div class="ms" style="left: 27.68%; border-color: #e26b82;"></div>
+            <div class="ms" style="left: 40.18%; border-color: #e26b82;"></div>
+            <div class="ms" style="left: 52.68%; border-color: #e26b82;"></div>
+            <div class="ms" style="left: 65.18%; border-color: #e26b82;"></div>
+            <div class="ms" style="left: 77.68%; border-color: #e26b82;"></div>
+            <div class="ms" style="left: 90.18%; border-color: #e26b82;"></div>
+            <div class="tk" style="left: 2.68%;"><i style="background: #e26b82;"></i><span>강사 섭외</span></div>
+            <div class="tk" style="left: 8.04%;"><i style="background: #e26b82;"></i><span>모집 홍보</span></div>
+            <div class="tk" style="left: 95.5%;"><i style="background: #e26b82;"></i><span>강사비</span></div>
+          </div>
+        </div>
+
+        <!-- row: 스마트폰 -->
+        <div class="prow">
+          <div class="plab">
+            <div class="n"><div class="dot" style="background: #e2a53a;"></div><span>스마트폰 활용교실</span></div>
+            <div class="s">5/13 – 6/24 · 수요일 6회 (6/3 휴강)</div>
+            <div class="s">담당 이○○</div>
+          </div>
+          <div class="track">
+            <div class="seg" style="left: 0%; width: 67.86%; background: #e2a53a; color: #ffffff; border-radius: 0 6px 6px 0;">진행 · 6회</div>
+            <div class="seg" style="left: 67.86%; width: 12.5%; background: #fbefd6; color: #8a5a09; border-radius: 0 6px 6px 0;">정리</div>
+            <div class="ms" style="left: 4.46%; border-color: #e2a53a;"></div>
+            <div class="ms" style="left: 16.96%; border-color: #e2a53a;"></div>
+            <div class="ms" style="left: 41.96%; border-color: #e2a53a;"></div>
+            <div class="ms" style="left: 54.46%; border-color: #e2a53a;"></div>
+            <div class="ms" style="left: 66.96%; border-color: #e2a53a;"></div>
+            <div class="tk" style="left: 70.5%;"><i style="background: #e2a53a;"></i><span>강사비</span></div>
+            <div class="tk" style="left: 79.5%;"><i style="background: #e2a53a;"></i><span>결과보고서</span></div>
+          </div>
+        </div>
+
+        <!-- row: 건강체조 -->
+        <div class="prow">
+          <div class="plab">
+            <div class="n"><div class="dot" style="background: #4faa72;"></div><span>실버 건강체조</span></div>
+            <div class="s">상시 · 목요일</div>
+            <div class="s">담당 박○○</div>
+          </div>
+          <div class="track">
+            <div class="seg" style="left: 0%; width: 100%; background: #b6dcc3; color: #1f6b3e; border-radius: 0;">상시 운영</div>
+            <div class="ms" style="left: 6.25%; border-color: #4faa72;"></div>
+            <div class="ms" style="left: 18.75%; border-color: #4faa72;"></div>
+            <div class="ms" style="left: 31.25%; border-color: #4faa72;"></div>
+            <div class="ms" style="left: 43.75%; border-color: #4faa72;"></div>
+            <div class="ms" style="left: 56.25%; border-color: #4faa72;"></div>
+            <div class="ms" style="left: 68.75%; border-color: #4faa72;"></div>
+            <div class="ms" style="left: 81.25%; border-color: #4faa72;"></div>
+            <div class="ms" style="left: 93.75%; border-color: #4faa72;"></div>
+          </div>
+        </div>
+
+        <!-- row: 노인일자리 -->
+        <div class="prow">
+          <div class="plab">
+            <div class="n"><div class="dot" style="background: #5b8ae0;"></div><span>하반기 노인일자리</span></div>
+            <div class="s">7/1 시작 · 준비 중</div>
+            <div class="s">담당 김○○</div>
+          </div>
+          <div class="track">
+            <div class="seg" style="left: 44.64%; width: 33.93%; background: #e3ecfb; color: #24509a;">준비</div>
+            <div class="seg" style="left: 78.57%; width: 21.43%; background: #5b8ae0; color: #ffffff; border-radius: 6px 0 0 6px;">진행</div>
+            <div class="tk" style="left: 45.5%;"><i style="background: #5b8ae0;"></i><span>사업계획서</span></div>
+            <div class="tk" style="left: 58%;"><i style="background: #5b8ae0;"></i><span>모집 공고</span></div>
+            <div class="tk" style="left: 70.5%;"><i style="background: #5b8ae0;"></i><span>면접</span></div>
+            <div class="tk" style="left: 76%;"><i style="background: #5b8ae0;"></i><span>OT</span></div>
+          </div>
+        </div>
+
+        <!-- today line -->
+        <div style="position: absolute; top: 0; bottom: 0; left: calc(220px + (100% - 220px) * 0.4196); width: 1.5px; background: #4b5bd6; pointer-events: none;"></div>
+        <div style="position: absolute; top: 44px; left: calc(220px + (100% - 220px) * 0.4196 - 18px); font-size: 10.5px; font-weight: 600; color: #ffffff; background: #4b5bd6; padding: 2px 6px; border-radius: 4px; pointer-events: none;">오늘</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

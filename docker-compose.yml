@@ -1,0 +1,24 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: heeday-db
+    environment:
+      MYSQL_ROOT_PASSWORD: heeday
+      MYSQL_DATABASE: heeday
+      MYSQL_USER: heeday
+      MYSQL_PASSWORD: heeday
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - heeday-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uheeday", "-pheeday"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  heeday-db:

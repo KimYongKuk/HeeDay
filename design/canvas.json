@@ -1,0 +1,15 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "월 보기", "x": 0, "y": 0, "w": 1440, "h": 900 },
+    { "file": "Week.dc.html", "title": "주 보기", "x": 1560, "y": 0, "w": 1440, "h": 900 },
+    { "file": "Timeline.dc.html", "title": "타임라인", "x": 0, "y": 1060, "w": 1440, "h": 900 },
+    { "file": "Wizard.dc.html", "title": "일정 등록 마법사", "x": 1560, "y": 1060, "w": 1440, "h": 900 },
+    { "file": "Template.dc.html", "title": "프로그램 양식 편집", "x": 0, "y": 2120, "w": 1440, "h": 900 },
+    { "file": "Library.dc.html", "title": "할 일 목록 관리", "x": 1560, "y": 2120, "w": 1440, "h": 900 }
+  ],
+  "annotations": [
+    { "id": "note-assumptions", "x": 0, "y": -150, "w": 520, "text": "샘플 데이터는 전부 가상입니다. 오늘 = 2026년 6월 10일로 가정했습니다.\n실제 앱에서는 Pretendard를, 이 목업에서는 IBM Plex Sans KR을 사용했습니다." },
+    { "id": "note-master", "x": 0, "y": 1990, "w": 520, "text": "마스터 관리 두 화면입니다. 왼쪽은 프로그램 양식(상대 날짜로 할 일을 배치), 오른쪽은 양식들이 공유하는 할 일 목록(체크리스트 포함)입니다." }
+  ],
+  "launch": { "view": "canvas" }
+}
