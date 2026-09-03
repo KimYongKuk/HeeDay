@@ -1,11 +1,12 @@
 [build]
   command = "pnpm build"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "22"
   PNPM_FLAGS = "--frozen-lockfile"
 
-# Next.js runtime (SSR + route handlers). Do not set a publish directory; the plugin manages it.
+# Next.js runtime (SSR + route handlers). Requires publish = ".next" together with the plugin.
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 

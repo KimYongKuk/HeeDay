@@ -48,3 +48,6 @@ next-env.d.ts
 
 # seeded design canvas (generated from design/*.dc.html)
 /design/heeday-calendar.html
+
+# netlify local state
+/.netlify
