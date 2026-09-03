@@ -1,6 +1,12 @@
 'use client';
 
-import { CalendarDays, CalendarOff, LayoutTemplate, ListChecks, SlidersHorizontal } from 'lucide-react';
+import {
+  CalendarDays,
+  CalendarOff,
+  LayoutTemplate,
+  ListChecks,
+  SlidersHorizontal,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -27,8 +33,8 @@ function NavItem({
     <Link
       href={href}
       className={cn(
-        'flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13.5px] text-ink-soft transition-colors hover:bg-surface/70',
-        active && 'bg-surface font-medium text-ink shadow-[0_1px_2px_rgba(20,18,12,0.06)]',
+        'text-ink-soft hover:bg-surface/70 flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13.5px] transition-colors',
+        active && 'bg-surface text-ink font-medium shadow-[0_1px_2px_rgba(20,18,12,0.06)]',
       )}
     >
       <Icon className="size-[17px]" strokeWidth={1.7} />
@@ -45,12 +51,17 @@ export function SideNav() {
     (href === '/calendar' && pathname.startsWith('/programs'));
 
   return (
-    <nav className="flex w-[216px] shrink-0 flex-col gap-0.5 border-r border-line px-3 py-4 print:hidden">
+    <nav className="border-line hidden w-[216px] shrink-0 flex-col gap-0.5 border-r px-3 py-4 md:flex print:hidden">
       {ITEMS.map((item) => (
         <NavItem key={item.href} {...item} active={isActive(item.href)} />
       ))}
       <div className="flex-1" />
-      <NavItem href="/settings" label="설정" icon={SlidersHorizontal} active={isActive('/settings')} />
+      <NavItem
+        href="/settings"
+        label="설정"
+        icon={SlidersHorizontal}
+        active={isActive('/settings')}
+      />
     </nav>
   );
 }

@@ -15,7 +15,8 @@ export function ChecklistEditor({
 }) {
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
 
-  const update = (i: number, text: string) => onChange(value.map((v, idx) => (idx === i ? text : v)));
+  const update = (i: number, text: string) =>
+    onChange(value.map((v, idx) => (idx === i ? text : v)));
   const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i));
   const add = () => {
     setFocusIndex(value.length);
@@ -23,30 +24,29 @@ export function ChecklistEditor({
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-surface">
-      <div className="flex h-[42px] items-center gap-2 border-b border-line px-3.5">
+    <div className="border-line bg-surface overflow-hidden rounded-xl border">
+      <div className="border-line flex h-[42px] items-center gap-2 border-b px-3.5">
         <span className="text-[13.5px] font-semibold">{title}</span>
-        <span className="text-xs text-ink-faint">{value.length}개</span>
+        <span className="text-ink-faint text-xs">{value.length}개</span>
         <div className="flex-1" />
         <button
           type="button"
           onClick={add}
-          className="flex items-center gap-1 text-[12.5px] font-medium text-brand hover:text-brand-deep"
+          className="text-brand hover:text-brand-deep flex items-center gap-1 text-[12.5px] font-medium"
         >
-          <Plus className="size-[13px]" strokeWidth={2} />
-          줄 추가
+          <Plus className="size-[13px]" strokeWidth={2} />줄 추가
         </button>
       </div>
       <div className="px-2 py-0.5">
         {value.length === 0 ? (
-          <p className="px-2 py-3 text-[12.5px] text-ink-faint">등록된 체크리스트가 없습니다.</p>
+          <p className="text-ink-faint px-2 py-3 text-[12.5px]">등록된 체크리스트가 없습니다.</p>
         ) : (
           value.map((text, i) => (
             <div
               key={i}
-              className="flex h-[38px] items-center gap-2 border-b border-hairline pr-1.5 pl-1.5 last:border-b-0"
+              className="border-hairline flex h-[38px] items-center gap-2 border-b pr-1.5 pl-1.5 last:border-b-0"
             >
-              <GripVertical className="size-3.5 text-ink-ghost" />
+              <GripVertical className="text-ink-ghost size-3.5" />
               <Input
                 value={text}
                 autoFocus={focusIndex === i}
@@ -59,13 +59,13 @@ export function ChecklistEditor({
                   }
                 }}
                 placeholder="예: 출석부 · 명찰"
-                className="h-7 flex-1 border-transparent bg-transparent px-1.5 shadow-none focus-visible:border-line"
+                className="focus-visible:border-line h-7 flex-1 border-transparent bg-transparent px-1.5 shadow-none"
               />
               <button
                 type="button"
                 onClick={() => remove(i)}
                 aria-label="삭제"
-                className="flex size-6 items-center justify-center rounded text-ink-ghost hover:bg-app hover:text-ink"
+                className="text-ink-ghost hover:bg-app hover:text-ink flex size-6 items-center justify-center rounded"
               >
                 <X className="size-3.5" />
               </button>

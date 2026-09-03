@@ -24,7 +24,7 @@ export function Logo() {
   return (
     <span className="inline-flex items-center gap-2.5">
       <LogoMark className="size-[26px] shrink-0" />
-      <span className="text-[15px] font-semibold tracking-[-0.01em] text-ink">HeeDay</span>
+      <span className="text-ink text-[15px] font-semibold tracking-[-0.01em]">HeeDay</span>
     </span>
   );
 }

@@ -5,10 +5,21 @@ import { toast } from 'sonner';
 import { ChecklistEditor } from '@/components/library/ChecklistEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiClientError } from '@/lib/api/client';
-import { useActionItem, useCreateActionItem, useDeleteActionItem, useUpdateActionItem } from '@/lib/api/queries';
+import {
+  useActionItem,
+  useCreateActionItem,
+  useDeleteActionItem,
+  useUpdateActionItem,
+} from '@/lib/api/queries';
 import { PALETTE, tagStyle } from '@/lib/domain/colors';
 import type { ActionItemDetailDto, CategoryDto } from '@/lib/domain/dto';
 import { actionItemInputSchema } from '@/lib/domain/zod';
@@ -44,7 +55,12 @@ export function LibraryDetail({
 }) {
   const isNew = id === 'new';
   const { data, isLoading } = useActionItem(isNew ? null : id);
-  const empty: FormState = { name: '', categoryId: defaultCategoryId, description: '', checklist: [] };
+  const empty: FormState = {
+    name: '',
+    categoryId: defaultCategoryId,
+    description: '',
+    checklist: [],
+  };
   const [form, setForm] = useState<FormState>(empty);
   const [baseline, setBaseline] = useState<FormState>(empty);
   // Derive form state from the loaded record (setState during render, per React docs).
@@ -104,7 +120,7 @@ export function LibraryDetail({
   };
 
   if (!isNew && isLoading) {
-    return <p className="p-6 text-[13px] text-ink-faint">불러오는 중</p>;
+    return <p className="text-ink-faint p-6 text-[13px]">불러오는 중</p>;
   }
 
   return (
@@ -118,37 +134,40 @@ export function LibraryDetail({
       <div className="flex items-center gap-3">
         <h2 className="text-base font-semibold">{isNew ? '새 할 일 항목' : baseline.name}</h2>
         {currentCategory ? (
-          <span className="rounded px-[7px] py-0.5 text-[11px] font-semibold" style={tagStyle(currentCategory.color)}>
+          <span
+            className="rounded px-[7px] py-0.5 text-[11px] font-semibold"
+            style={tagStyle(currentCategory.color)}
+          >
             {currentCategory.name}
           </span>
         ) : null}
         <div className="flex-1" />
         {!isNew && data ? (
-          <span className="text-xs text-ink-faint">
+          <span className="text-ink-faint text-xs">
             {dirty ? '수정 중 · 저장되지 않음' : `최종 수정 ${formatDate(data.updatedAt)}`}
           </span>
         ) : null}
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_160px] gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_160px]">
         <label className="block">
-          <span className="mb-[5px] block text-[11.5px] font-medium text-ink-faint">이름</span>
+          <span className="text-ink-faint mb-[5px] block text-[11.5px] font-medium">이름</span>
           <Input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="예: 준비물 점검"
             autoFocus={isNew}
-            className="h-9 bg-surface"
+            className="bg-surface h-9"
           />
         </label>
         <div>
-          <span className="mb-[5px] block text-[11.5px] font-medium text-ink-faint">분류</span>
+          <span className="text-ink-faint mb-[5px] block text-[11.5px] font-medium">분류</span>
           <Select
             items={categoryItems}
             value={form.categoryId === null ? null : String(form.categoryId)}
             onValueChange={(v) => v && setForm({ ...form, categoryId: Number(v) })}
           >
-            <SelectTrigger className="h-9 w-full bg-surface">
+            <SelectTrigger className="bg-surface h-9 w-full">
               <SelectValue placeholder="분류 선택" />
             </SelectTrigger>
             <SelectContent>
@@ -163,7 +182,7 @@ export function LibraryDetail({
       </div>
 
       <label className="block">
-        <span className="mb-[5px] block text-[11.5px] font-medium text-ink-faint">설명</span>
+        <span className="text-ink-faint mb-[5px] block text-[11.5px] font-medium">설명</span>
         <Textarea
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -173,23 +192,29 @@ export function LibraryDetail({
         />
       </label>
 
-      <ChecklistEditor value={form.checklist} onChange={(checklist) => setForm({ ...form, checklist })} />
+      <ChecklistEditor
+        value={form.checklist}
+        onChange={(checklist) => setForm({ ...form, checklist })}
+      />
 
       {!isNew && data ? (
         <div>
-          <span className="mb-[5px] block text-[11.5px] font-medium text-ink-faint">
+          <span className="text-ink-faint mb-[5px] block text-[11.5px] font-medium">
             사용 중인 양식 · {data.usedBy.length}
           </span>
           {data.usedBy.length === 0 ? (
-            <p className="text-[12.5px] text-ink-faint">사용 중인 양식이 없습니다.</p>
+            <p className="text-ink-faint text-[12.5px]">사용 중인 양식이 없습니다.</p>
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {data.usedBy.map((u) => (
                 <span
                   key={u.templateId}
-                  className="flex h-7 items-center gap-1.5 rounded-md border border-line bg-surface pr-2.5 pl-2 text-[12.5px] font-medium"
+                  className="border-line bg-surface flex h-7 items-center gap-1.5 rounded-md border pr-2.5 pl-2 text-[12.5px] font-medium"
                 >
-                  <span className="size-2 rounded-full" style={{ background: PALETTE[u.color].solid }} />
+                  <span
+                    className="size-2 rounded-full"
+                    style={{ background: PALETTE[u.color].solid }}
+                  />
                   {u.templateName}
                 </span>
               ))}
@@ -199,14 +224,16 @@ export function LibraryDetail({
       ) : null}
 
       <div className="flex-1" />
-      <div className="flex items-center gap-2.5 border-t border-line pt-3.5">
+      <div className="border-line flex items-center gap-2.5 border-t pt-3.5">
         {!isNew ? (
           <button
             type="button"
             onClick={destroy}
             disabled={busy || (data?.usageCount ?? 0) > 0}
-            title={(data?.usageCount ?? 0) > 0 ? `${data?.usageCount}개 양식에서 사용 중` : undefined}
-            className="text-[12.5px] font-medium text-sun disabled:cursor-not-allowed disabled:opacity-40"
+            title={
+              (data?.usageCount ?? 0) > 0 ? `${data?.usageCount}개 양식에서 사용 중` : undefined
+            }
+            className="text-sun text-[12.5px] font-medium disabled:cursor-not-allowed disabled:opacity-40"
           >
             항목 삭제
           </button>

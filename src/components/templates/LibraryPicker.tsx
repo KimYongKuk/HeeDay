@@ -2,7 +2,14 @@
 
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useActionItems } from '@/lib/api/queries';
 import { tagStyle } from '@/lib/domain/colors';
@@ -25,12 +32,11 @@ export function LibraryPicker({
         render={
           <button
             type="button"
-            className="mt-1 flex h-[34px] w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-ink-ghost/70 text-[12.5px] font-medium text-brand hover:border-brand hover:bg-brand-soft/40"
+            className="border-ink-ghost/70 text-brand hover:border-brand hover:bg-brand-soft/40 mt-1 flex h-[34px] w-full items-center justify-center gap-1.5 rounded-lg border border-dashed text-[12.5px] font-medium"
           />
         }
       >
-        <Plus className="size-[13px]" strokeWidth={2} />
-        할 일 목록에서 추가
+        <Plus className="size-[13px]" strokeWidth={2} />할 일 목록에서 추가
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 p-0">
         <Command>
@@ -51,10 +57,13 @@ export function LibraryPicker({
                     className={cn('gap-2', used && 'opacity-50')}
                   >
                     <span className="truncate">{it.name}</span>
-                    <span className="ml-auto rounded px-1.5 py-px text-[10.5px] font-semibold" style={tagStyle(it.categoryColor)}>
+                    <span
+                      className="ml-auto rounded px-1.5 py-px text-[10.5px] font-semibold"
+                      style={tagStyle(it.categoryColor)}
+                    >
                       {it.categoryName}
                     </span>
-                    {used ? <span className="text-[11px] text-ink-faint">추가됨</span> : null}
+                    {used ? <span className="text-ink-faint text-[11px]">추가됨</span> : null}
                   </CommandItem>
                 );
               })}

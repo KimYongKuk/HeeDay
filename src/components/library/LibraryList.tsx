@@ -48,13 +48,19 @@ export function LibraryList({
   const chip = (active: boolean) =>
     cn(
       'flex h-7 items-center gap-1 rounded-full border px-[11px] text-[12.5px] font-medium transition-colors',
-      active ? 'border-ink bg-ink text-white' : 'border-line bg-surface text-ink-soft hover:border-ink-ghost',
+      active
+        ? 'border-ink bg-ink text-white'
+        : 'border-line bg-surface text-ink-soft hover:border-ink-ghost',
     );
 
   return (
-    <div className="flex min-h-0 flex-col overflow-hidden border-r border-line bg-surface">
+    <div className="bg-surface md:border-line flex min-h-0 flex-1 flex-col overflow-hidden md:border-r">
       <div className="flex flex-wrap items-center gap-1.5 px-4 py-3">
-        <button type="button" onClick={() => onCategoryChange('ALL')} className={chip(categoryId === 'ALL')}>
+        <button
+          type="button"
+          onClick={() => onCategoryChange('ALL')}
+          className={chip(categoryId === 'ALL')}
+        >
           전체
         </button>
         {categories.map((c) => {
@@ -64,8 +70,18 @@ export function LibraryList({
               key={c.id}
               type="button"
               onClick={() => (editTabs ? onRemoveCategory(c.id) : onCategoryChange(c.id))}
-              title={editTabs ? (c.itemCount > 0 ? `항목 ${c.itemCount}개 포함 · 삭제 불가` : '분류 삭제') : undefined}
-              className={cn(chip(active), editTabs && (c.itemCount > 0 ? 'opacity-50' : 'border-sun/40 text-sun hover:bg-danger-soft'))}
+              title={
+                editTabs
+                  ? c.itemCount > 0
+                    ? `항목 ${c.itemCount}개 포함 · 삭제 불가`
+                    : '분류 삭제'
+                  : undefined
+              }
+              className={cn(
+                chip(active),
+                editTabs &&
+                  (c.itemCount > 0 ? 'opacity-50' : 'border-sun/40 text-sun hover:bg-danger-soft'),
+              )}
             >
               {c.name}
               {editTabs ? <X className="size-3" /> : null}
@@ -78,14 +94,14 @@ export function LibraryList({
               <button
                 type="button"
                 aria-label="분류 추가"
-                className="flex size-7 items-center justify-center rounded-full border border-dashed border-ink-ghost text-ink-muted hover:border-ink hover:text-ink"
+                className="border-ink-ghost text-ink-muted hover:border-ink hover:text-ink flex size-7 items-center justify-center rounded-full border border-dashed"
               />
             }
           >
             <Plus className="size-3.5" />
           </PopoverTrigger>
           <PopoverContent align="start" className="w-56 gap-2 p-2.5">
-            <span className="text-xs font-medium text-ink-faint">새 분류</span>
+            <span className="text-ink-faint text-xs font-medium">새 분류</span>
             <div className="flex items-center gap-1.5">
               <input
                 value={newName}
@@ -94,13 +110,13 @@ export function LibraryList({
                 autoFocus
                 maxLength={40}
                 placeholder="예: 안전"
-                className="h-8 min-w-0 flex-1 rounded-md border border-line bg-surface px-2 text-[13px] outline-none focus:border-ring"
+                className="border-line bg-surface focus:border-ring h-8 min-w-0 flex-1 rounded-md border px-2 text-[13px] outline-none"
               />
               <button
                 type="button"
                 onClick={submitNew}
                 aria-label="추가"
-                className="flex size-8 items-center justify-center rounded-md bg-brand text-white hover:bg-brand-deep"
+                className="bg-brand hover:bg-brand-deep flex size-8 items-center justify-center rounded-md text-white"
               >
                 <Check className="size-3.5" strokeWidth={2.5} />
               </button>
@@ -113,16 +129,18 @@ export function LibraryList({
           aria-label={editTabs ? '분류 삭제 종료' : '분류 삭제'}
           aria-pressed={editTabs}
           className={cn(
-            'flex size-7 items-center justify-center rounded-full border border-dashed text-ink-muted hover:border-ink hover:text-ink',
+            'text-ink-muted hover:border-ink hover:text-ink flex size-7 items-center justify-center rounded-full border border-dashed',
             editTabs ? 'border-ink bg-ink text-white hover:text-white' : 'border-ink-ghost',
           )}
         >
           <Minus className="size-3.5" />
         </button>
-        {editTabs ? <span className="text-[11.5px] text-ink-faint">삭제할 분류를 선택하세요</span> : null}
+        {editTabs ? (
+          <span className="text-ink-faint text-[11.5px]">삭제할 분류를 선택하세요</span>
+        ) : null}
       </div>
 
-      <div className="grid h-[26px] grid-cols-[minmax(0,1fr)_76px_76px_36px] items-center px-4 text-[11px] font-medium text-ink-faint">
+      <div className="text-ink-faint grid h-[26px] grid-cols-[minmax(0,1fr)_76px_76px_36px] items-center px-4 text-[11px] font-medium">
         <span>이름</span>
         <span className="text-right">체크리스트</span>
         <span className="text-right">사용 양식</span>
@@ -131,13 +149,13 @@ export function LibraryList({
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {loading ? (
-          <p className="px-4 py-6 text-[13px] text-ink-faint">불러오는 중</p>
+          <p className="text-ink-faint px-4 py-6 text-[13px]">불러오는 중</p>
         ) : groups.length === 0 ? (
-          <p className="px-4 py-6 text-[13px] text-ink-faint">조건에 맞는 항목이 없습니다.</p>
+          <p className="text-ink-faint px-4 py-6 text-[13px]">조건에 맞는 항목이 없습니다.</p>
         ) : (
           groups.map((g) => (
             <div key={g.category.id}>
-              <div className="flex h-[30px] items-center border-y border-line bg-weekend px-4 text-[11px] font-semibold tracking-[0.04em] text-ink-faint">
+              <div className="border-line bg-weekend text-ink-faint flex h-[30px] items-center border-y px-4 text-[11px] font-semibold tracking-[0.04em]">
                 {g.category.name}
               </div>
               {g.items.map((it) => {
@@ -146,7 +164,7 @@ export function LibraryList({
                   <div
                     key={it.id}
                     className={cn(
-                      'group grid h-10 grid-cols-[minmax(0,1fr)_76px_76px_36px] items-center border-b border-hairline pl-4 text-[13.5px] transition-colors hover:bg-app',
+                      'group border-hairline hover:bg-app grid h-10 grid-cols-[minmax(0,1fr)_76px_76px_36px] items-center border-b pl-4 text-[13.5px] transition-colors',
                       active && 'bg-brand-soft hover:bg-brand-soft',
                     )}
                   >
@@ -157,13 +175,23 @@ export function LibraryList({
                     >
                       {it.name}
                     </button>
-                    <button type="button" onClick={() => onSelect(it.id)} className="h-full text-right">
-                      <span className={cn('text-xs text-ink-faint', active && 'text-brand-deep')}>
+                    <button
+                      type="button"
+                      onClick={() => onSelect(it.id)}
+                      className="h-full text-right"
+                    >
+                      <span className={cn('text-ink-faint text-xs', active && 'text-brand-deep')}>
                         {it.defaultChecklist.length}
                       </span>
                     </button>
-                    <button type="button" onClick={() => onSelect(it.id)} className="h-full text-right">
-                      <span className={cn('text-xs text-ink-faint', active && 'text-brand-deep')}>{it.usageCount}</span>
+                    <button
+                      type="button"
+                      onClick={() => onSelect(it.id)}
+                      className="h-full text-right"
+                    >
+                      <span className={cn('text-ink-faint text-xs', active && 'text-brand-deep')}>
+                        {it.usageCount}
+                      </span>
                     </button>
                     <button
                       type="button"
@@ -171,7 +199,7 @@ export function LibraryList({
                       aria-label="삭제"
                       title={it.usageCount > 0 ? `${it.usageCount}개 양식에서 사용 중` : '삭제'}
                       className={cn(
-                        'mx-auto flex size-7 items-center justify-center rounded text-ink-ghost opacity-0 transition-opacity group-hover:opacity-100 hover:bg-danger-soft hover:text-sun',
+                        'text-ink-ghost hover:bg-danger-soft hover:text-sun mx-auto flex size-7 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100',
                         it.usageCount > 0 && 'hover:bg-app hover:text-ink-faint',
                       )}
                     >

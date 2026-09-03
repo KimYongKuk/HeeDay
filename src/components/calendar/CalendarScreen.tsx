@@ -5,7 +5,9 @@ import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { CalendarToolbar, type CalendarView } from '@/components/calendar/CalendarToolbar';
 import { CalendarDnd } from '@/components/calendar/dnd';
+import { MobileMonth } from '@/components/calendar/MobileMonth';
 import { MonthView } from '@/components/calendar/MonthView';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { RightPanel } from '@/components/calendar/RightPanel';
 import { TimelineView } from '@/components/calendar/TimelineView';
 import { WeekView } from '@/components/calendar/WeekView';
@@ -23,8 +25,11 @@ export function CalendarScreen() {
   const pathname = usePathname();
   const params = useSearchParams();
   const today = todayInSeoul();
+  const isMobile = useIsMobile();
 
-  const view = (VIEWS as string[]).includes(params.get('view') ?? '') ? (params.get('view') as CalendarView) : 'month';
+  const view = (VIEWS as string[]).includes(params.get('view') ?? '')
+    ? (params.get('view') as CalendarView)
+    : 'month';
   const dateParam = params.get('date');
   const date: ISODate = dateParam && isISODate(dateParam) ? dateParam : today;
   const programParam = params.get('program');
@@ -120,14 +125,28 @@ export function CalendarScreen() {
       {view === 'month' ? (
         <div data-print-header className="hidden items-baseline gap-3 px-1 pb-2 print:flex">
           <span className="text-xl font-semibold">{title}</span>
-          <span className="text-sm text-ink-muted">달성군남부노인복지관 프로그램 일정</span>
-          {programId ? <span className="text-sm text-ink-muted">· {programs.find((p) => p.id === programId)?.name}</span> : null}
-          <span className="ml-auto text-xs text-ink-faint">출력 {formatMonthDayKo(today)}</span>
+          <span className="text-ink-muted text-sm">달성군남부노인복지관 프로그램 일정</span>
+          {programId ? (
+            <span className="text-ink-muted text-sm">
+              · {programs.find((p) => p.id === programId)?.name}
+            </span>
+          ) : null}
+          <span className="text-ink-faint ml-auto text-xs">출력 {formatMonthDayKo(today)}</span>
         </div>
       ) : null}
-      <div className="flex min-h-0 flex-1 border-t border-line print:block print:border print:border-line">
+      <div className="border-line print:border-line flex min-h-0 flex-1 border-t print:block print:border">
         <CalendarDnd onMove={onMove}>
-          {view === 'month' ? (
+          {view === 'month' && isMobile ? (
+            <MobileMonth
+              weeks={weeks}
+              monthKey={date.slice(0, 7)}
+              today={today}
+              tasks={tasks}
+              programs={shownPrograms}
+              closures={closures}
+              onToggle={onToggle}
+            />
+          ) : view === 'month' ? (
             <MonthView
               weeks={weeks}
               monthKey={date.slice(0, 7)}
@@ -139,14 +158,27 @@ export function CalendarScreen() {
               onToggle={onToggle}
             />
           ) : view === 'week' ? (
-            <WeekView days={days} today={today} tasks={tasks} programs={shownPrograms} closures={closures} onToggle={onToggle} />
+            <WeekView
+              days={days}
+              today={today}
+              tasks={tasks}
+              programs={shownPrograms}
+              closures={closures}
+              onToggle={onToggle}
+            />
           ) : (
             <TimelineView window={win} today={today} tasks={tasks} programs={shownPrograms} />
           )}
         </CalendarDnd>
         {view === 'month' ? (
-          <div className="flex print:hidden">
-            <RightPanel today={today} todayTasks={todayTasks} weekTasks={weekTasks} programs={programs} onToggle={onToggle} />
+          <div className="hidden lg:flex print:hidden">
+            <RightPanel
+              today={today}
+              todayTasks={todayTasks}
+              weekTasks={weekTasks}
+              programs={programs}
+              onToggle={onToggle}
+            />
           </div>
         ) : null}
       </div>

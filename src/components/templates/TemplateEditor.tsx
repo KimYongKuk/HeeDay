@@ -1,6 +1,7 @@
 'use client';
 
-import { Clock3 } from 'lucide-react';
+import { ChevronLeft, Clock3 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -10,7 +11,12 @@ import { TemplateItemList } from '@/components/templates/TemplateItemList';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ApiClientError } from '@/lib/api/client';
-import { useDeleteTemplate, useDuplicateTemplate, useSaveTemplate, useTemplate } from '@/lib/api/queries';
+import {
+  useDeleteTemplate,
+  useDuplicateTemplate,
+  useSaveTemplate,
+  useTemplate,
+} from '@/lib/api/queries';
 import { PALETTE } from '@/lib/domain/colors';
 import type { ActionItemDto, TemplateDetailDto } from '@/lib/domain/dto';
 import { templateInputSchema } from '@/lib/domain/zod';
@@ -30,21 +36,30 @@ export function TemplateEditor({ id }: { id: number }) {
     setBaseline(JSON.stringify(d));
   }
 
-  const dirty = useMemo(() => (draft ? JSON.stringify(draft) !== baseline : false), [draft, baseline]);
+  const dirty = useMemo(
+    () => (draft ? JSON.stringify(draft) !== baseline : false),
+    [draft, baseline],
+  );
   const save = useSaveTemplate();
   const duplicate = useDuplicateTemplate();
   const remove = useDeleteTemplate();
   const busy = save.isPending || duplicate.isPending || remove.isPending;
-  const usedActionItemIds = useMemo(() => new Set(draft?.items.map((it) => it.actionItemId) ?? []), [draft]);
+  const usedActionItemIds = useMemo(
+    () => new Set(draft?.items.map((it) => it.actionItemId) ?? []),
+    [draft],
+  );
 
   const patch = (fn: (d: TemplateDraft) => TemplateDraft) => setDraft((d) => (d ? fn(d) : d));
   const onChangeItem = (key: string, p: Partial<DraftItem>) =>
     patch((d) => ({ ...d, items: d.items.map((it) => (it.key === key ? { ...it, ...p } : it)) }));
-  const onRemoveItem = (key: string) => patch((d) => ({ ...d, items: d.items.filter((it) => it.key !== key) }));
+  const onRemoveItem = (key: string) =>
+    patch((d) => ({ ...d, items: d.items.filter((it) => it.key !== key) }));
   const onReorder = (keys: string[]) =>
     patch((d) => ({
       ...d,
-      items: keys.map((k) => d.items.find((it) => it.key === k)).filter((it): it is DraftItem => Boolean(it)),
+      items: keys
+        .map((k) => d.items.find((it) => it.key === k))
+        .filter((it): it is DraftItem => Boolean(it)),
     }));
   const onAdd = (item: ActionItemDto) =>
     patch((d) => ({
@@ -68,7 +83,8 @@ export function TemplateEditor({ id }: { id: number }) {
   const onSave = async () => {
     if (!draft) return;
     const parsed = templateInputSchema.safeParse(draftToInput(draft));
-    if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? '입력값을 확인하세요.');
+    if (!parsed.success)
+      return toast.error(parsed.error.issues[0]?.message ?? '입력값을 확인하세요.');
     try {
       await save.mutateAsync({ id, input: parsed.data });
       toast.success('양식을 저장했습니다.');
@@ -104,21 +120,32 @@ export function TemplateEditor({ id }: { id: number }) {
   };
 
   if (isError) return <EmptyState title="양식을 찾을 수 없습니다" />;
-  if (isLoading || !draft) return <p className="p-6 text-[13px] text-ink-faint">불러오는 중</p>;
+  if (isLoading || !draft) return <p className="text-ink-faint p-6 text-[13px]">불러오는 중</p>;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex h-[60px] shrink-0 items-center gap-3.5 border-b border-line px-6">
-        <span className="size-3.5 shrink-0 rounded" style={{ background: PALETTE[draft.color].solid }} />
+      <div className="border-line flex min-h-[60px] shrink-0 flex-wrap items-center gap-x-3.5 gap-y-2 border-b px-4 py-2 md:px-6">
+        <Link
+          href="/templates"
+          className="text-brand flex items-center gap-1 text-[12.5px] font-medium md:hidden"
+        >
+          <ChevronLeft className="size-3.5" /> 양식 목록
+        </Link>
+        <span
+          className="size-3.5 shrink-0 rounded"
+          style={{ background: PALETTE[draft.color].solid }}
+        />
         <input
           value={draft.name}
           onChange={(e) => patch((d) => ({ ...d, name: e.target.value }))}
           aria-label="양식 이름"
-          className="min-w-0 max-w-[360px] flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 text-lg font-semibold tracking-[-0.01em] outline-none hover:border-line focus:border-line focus:bg-surface"
+          className="hover:border-line focus:border-line focus:bg-surface min-w-[160px] max-w-[360px] min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 text-lg font-semibold tracking-[-0.01em] outline-none"
         />
-        <span className="shrink-0 text-[12.5px] text-ink-faint">등록된 일정 {data?.programCount ?? 0}건</span>
+        <span className="text-ink-faint hidden shrink-0 text-[12.5px] sm:inline">
+          등록된 일정 {data?.programCount ?? 0}건
+        </span>
         <div className="flex-1" />
-        <span className="flex items-center gap-1.5 text-xs text-ink-faint">
+        <span className="text-ink-faint hidden items-center gap-1.5 text-xs sm:flex">
           <Clock3 className="size-3.5" />
           {dirty ? '수정 중 · 저장되지 않음' : '저장됨'}
         </span>
@@ -130,35 +157,40 @@ export function TemplateEditor({ id }: { id: number }) {
         </Button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pt-[18px] pb-8">
-        <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto] items-end gap-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pt-[18px] pb-8 md:px-6">
+        <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto]">
           <label className="block">
-            <span className="mb-[5px] block text-[11.5px] font-medium text-ink-faint">설명</span>
+            <span className="text-ink-faint mb-[5px] block text-[11.5px] font-medium">설명</span>
             <Input
               value={draft.description}
               onChange={(e) => patch((d) => ({ ...d, description: e.target.value }))}
               placeholder="프로그램 개요"
-              className="h-[34px] bg-surface"
+              className="bg-surface h-[34px]"
             />
           </label>
           <label className="block">
-            <span className="mb-[5px] block text-[11.5px] font-medium text-ink-faint">기본 담당자</span>
+            <span className="text-ink-faint mb-[5px] block text-[11.5px] font-medium">
+              기본 담당자
+            </span>
             <Input
               value={draft.defaultAssignee}
               onChange={(e) => patch((d) => ({ ...d, defaultAssignee: e.target.value }))}
               placeholder="예: 김○○"
-              className="h-[34px] bg-surface"
+              className="bg-surface h-[34px]"
             />
           </label>
           <div className="pb-1.5">
-            <span className="mb-[9px] block text-[11.5px] font-medium text-ink-faint">색상</span>
-            <ColorSwatches value={draft.color} onChange={(color) => patch((d) => ({ ...d, color }))} />
+            <span className="text-ink-faint mb-[9px] block text-[11.5px] font-medium">색상</span>
+            <ColorSwatches
+              value={draft.color}
+              onChange={(color) => patch((d) => ({ ...d, color }))}
+            />
           </div>
         </div>
 
-        <div className="flex h-9 items-center gap-2.5 rounded-lg bg-brand-soft px-3 text-[12.5px] text-brand-deep">
-          이 양식으로 일정을 등록할 때 아래 할 일이 순서대로 제시되며, 날짜는 등록 과정에서 직접 배치합니다. 양식 수정은 이미
-          등록된 일정에 영향을 주지 않습니다.
+        <div className="bg-brand-soft text-brand-deep flex min-h-9 items-center gap-2.5 rounded-lg px-3 py-2 text-[12.5px] leading-relaxed">
+          이 양식으로 일정을 등록할 때 아래 할 일이 순서대로 제시되며, 날짜는 등록 과정에서 직접
+          배치합니다. 양식 수정은 이미 등록된 일정에 영향을 주지 않습니다.
         </div>
 
         <TemplateItemList
@@ -170,12 +202,12 @@ export function TemplateEditor({ id }: { id: number }) {
           onAdd={onAdd}
         />
 
-        <div className="mt-4 flex items-center border-t border-line pt-4">
+        <div className="border-line mt-4 flex items-center border-t pt-4">
           <button
             type="button"
             onClick={onDelete}
             disabled={busy}
-            className="text-[12.5px] font-medium text-sun hover:underline disabled:opacity-40"
+            className="text-sun text-[12.5px] font-medium hover:underline disabled:opacity-40"
           >
             양식 삭제
           </button>

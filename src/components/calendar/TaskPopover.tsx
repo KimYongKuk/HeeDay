@@ -25,7 +25,13 @@ interface Draft {
 }
 
 function fromTask(t: CalendarTaskDto): Draft {
-  return { title: t.title, dueDate: t.dueDate, done: t.done, checklist: t.checklist.map((c) => ({ ...c })), notes: t.notes ?? '' };
+  return {
+    title: t.title,
+    dueDate: t.dueDate,
+    done: t.done,
+    checklist: t.checklist.map((c) => ({ ...c })),
+    notes: t.notes ?? '',
+  };
 }
 
 export function TaskPopover({ task, children }: { task: CalendarTaskDto; children: ReactNode }) {
@@ -59,7 +65,9 @@ function TaskEditor({ task, onClose }: { task: CalendarTaskDto; onClose: () => v
           title: d.title.trim(),
           dueDate: d.dueDate,
           done: d.done,
-          checklist: d.checklist.map((c) => ({ text: c.text.trim(), checked: c.checked })).filter((c) => c.text),
+          checklist: d.checklist
+            .map((c) => ({ text: c.text.trim(), checked: c.checked }))
+            .filter((c) => c.text),
           notes: d.notes.trim() === '' ? null : d.notes.trim(),
         },
       });
@@ -81,27 +89,40 @@ function TaskEditor({ task, onClose }: { task: CalendarTaskDto; onClose: () => v
 
   return (
     <div className="flex flex-col">
-      <div className="flex items-center gap-2 border-b border-line px-3.5 py-2.5 text-xs text-ink-faint">
+      <div className="border-line text-ink-faint flex items-center gap-2 border-b px-3.5 py-2.5 text-xs">
         <span className="size-2 rounded-full" style={{ background: p.solid }} />
-        <span className="truncate font-medium text-ink-soft">{task.programName}</span>
+        <span className="text-ink-soft truncate font-medium">{task.programName}</span>
         {task.categoryName ? <span>· {task.categoryName}</span> : null}
-        <button type="button" onClick={onClose} aria-label="닫기" className="ml-auto text-ink-ghost hover:text-ink">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="닫기"
+          className="text-ink-ghost hover:text-ink ml-auto"
+        >
           <X className="size-3.5" />
         </button>
       </div>
 
       <div className="flex flex-col gap-3 px-3.5 py-3">
-        <Input value={d.title} onChange={(e) => setD({ ...d, title: e.target.value })} className="h-9 bg-surface text-[13.5px] font-medium" />
+        <Input
+          value={d.title}
+          onChange={(e) => setD({ ...d, title: e.target.value })}
+          className="bg-surface h-9 text-[13.5px] font-medium"
+        />
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-          <DateField value={d.dueDate} onChange={(dueDate) => setD({ ...d, dueDate })} className="w-full" />
-          <label className="flex items-center gap-2 text-[12.5px] text-ink-soft">
+          <DateField
+            value={d.dueDate}
+            onChange={(dueDate) => setD({ ...d, dueDate })}
+            className="w-full"
+          />
+          <label className="text-ink-soft flex items-center gap-2 text-[12.5px]">
             <Switch size="sm" checked={d.done} onCheckedChange={(done) => setD({ ...d, done })} />
             완료
           </label>
         </div>
 
         <div>
-          <div className="mb-1.5 flex items-center gap-2 text-[11.5px] font-medium text-ink-faint">
+          <div className="text-ink-faint mb-1.5 flex items-center gap-2 text-[11.5px] font-medium">
             <span>체크리스트</span>
             {d.checklist.length > 0 ? (
               <span>
@@ -110,8 +131,10 @@ function TaskEditor({ task, onClose }: { task: CalendarTaskDto; onClose: () => v
             ) : null}
             <button
               type="button"
-              onClick={() => setD({ ...d, checklist: [...d.checklist, { text: '', checked: false }] })}
-              className="ml-auto flex items-center gap-1 text-brand hover:text-brand-deep"
+              onClick={() =>
+                setD({ ...d, checklist: [...d.checklist, { text: '', checked: false }] })
+              }
+              className="text-brand hover:text-brand-deep ml-auto flex items-center gap-1"
             >
               <Plus className="size-3" strokeWidth={2} /> 추가
             </button>
@@ -121,16 +144,37 @@ function TaskEditor({ task, onClose }: { task: CalendarTaskDto; onClose: () => v
               <div key={i} className="flex items-center gap-2">
                 <Checkbox
                   checked={c.checked}
-                  onCheckedChange={(v) => setD({ ...d, checklist: d.checklist.map((x, idx) => (idx === i ? { ...x, checked: Boolean(v) } : x)) })}
+                  onCheckedChange={(v) =>
+                    setD({
+                      ...d,
+                      checklist: d.checklist.map((x, idx) =>
+                        idx === i ? { ...x, checked: Boolean(v) } : x,
+                      ),
+                    })
+                  }
                 />
                 <input
                   value={c.text}
                   autoFocus={c.text === ''}
-                  onChange={(e) => setD({ ...d, checklist: d.checklist.map((x, idx) => (idx === i ? { ...x, text: e.target.value } : x)) })}
+                  onChange={(e) =>
+                    setD({
+                      ...d,
+                      checklist: d.checklist.map((x, idx) =>
+                        idx === i ? { ...x, text: e.target.value } : x,
+                      ),
+                    })
+                  }
                   placeholder="항목"
-                  className={`h-7 min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 text-[13px] outline-none hover:border-line focus:border-line focus:bg-surface ${c.checked ? 'text-ink-faint line-through' : ''}`}
+                  className={`hover:border-line focus:border-line focus:bg-surface h-7 min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 text-[13px] outline-none ${c.checked ? 'text-ink-faint line-through' : ''}`}
                 />
-                <button type="button" onClick={() => setD({ ...d, checklist: d.checklist.filter((_, idx) => idx !== i) })} aria-label="삭제" className="text-ink-ghost hover:text-ink">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setD({ ...d, checklist: d.checklist.filter((_, idx) => idx !== i) })
+                  }
+                  aria-label="삭제"
+                  className="text-ink-ghost hover:text-ink"
+                >
                   <X className="size-3" />
                 </button>
               </div>
@@ -138,11 +182,22 @@ function TaskEditor({ task, onClose }: { task: CalendarTaskDto; onClose: () => v
           </div>
         </div>
 
-        <Textarea value={d.notes} onChange={(e) => setD({ ...d, notes: e.target.value })} placeholder="메모" rows={2} className="bg-surface text-[13px]" />
+        <Textarea
+          value={d.notes}
+          onChange={(e) => setD({ ...d, notes: e.target.value })}
+          placeholder="메모"
+          rows={2}
+          className="bg-surface text-[13px]"
+        />
       </div>
 
-      <div className="flex items-center gap-2 border-t border-line px-3.5 py-2.5">
-        <button type="button" onClick={destroy} disabled={busy} className="flex items-center gap-1 text-[12px] font-medium text-sun hover:underline disabled:opacity-40">
+      <div className="border-line flex items-center gap-2 border-t px-3.5 py-2.5">
+        <button
+          type="button"
+          onClick={destroy}
+          disabled={busy}
+          className="text-sun flex items-center gap-1 text-[12px] font-medium hover:underline disabled:opacity-40"
+        >
           <Trash2 className="size-3.5" /> 삭제
         </button>
         <div className="flex-1" />

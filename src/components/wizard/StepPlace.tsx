@@ -19,10 +19,23 @@ import { PALETTE } from '@/lib/domain/colors';
 import { WEEKDAY_LABEL } from '@/lib/domain/labels';
 import type { DateWarning, ISODate, TaskDraft } from '@/lib/domain/types';
 import { addMonthsISO, monthGrid } from '@/lib/services/calendarLayout';
-import { buildClosureSet, dateWarning, draftsFromSnapshot, evenSpread, sortDrafts } from '@/lib/services/placement';
+import {
+  buildClosureSet,
+  dateWarning,
+  draftsFromSnapshot,
+  evenSpread,
+  sortDrafts,
+} from '@/lib/services/placement';
 import { useWizardStore } from '@/stores/wizardStore';
 import { cn } from '@/lib/utils';
-import { addDaysISO, compareISO, formatMonthDayKo, formatShort, isISODate, weekdayISO } from '@/lib/utils/dates';
+import {
+  addDaysISO,
+  compareISO,
+  formatMonthDayKo,
+  formatShort,
+  isISODate,
+  weekdayISO,
+} from '@/lib/utils/dates';
 
 const WARNING_LABEL: Record<DateWarning, string> = {
   WEEKEND: '주말',
@@ -41,9 +54,15 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
   const startDate = s.form.startDate as ISODate;
   const endDate = s.form.endDate as ISODate;
   const period = { startDate, endDate };
-  const { data: closureRows = [] } = useClosures({ from: addDaysISO(startDate, -31), to: addDaysISO(endDate, 31) });
+  const { data: closureRows = [] } = useClosures({
+    from: addDaysISO(startDate, -31),
+    to: addDaysISO(endDate, 31),
+  });
   const closures = useMemo(() => buildClosureSet(closureRows), [closureRows]);
-  const closureNames = useMemo(() => new Map(closureRows.map((c) => [c.date, c.name])), [closureRows]);
+  const closureNames = useMemo(
+    () => new Map(closureRows.map((c) => [c.date, c.name])),
+    [closureRows],
+  );
 
   const drafts: TaskDraft[] = useMemo(() => {
     if (!s.snapshot) return [];
@@ -58,7 +77,10 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
       required: true,
       checklist: e.checklist,
     }));
-    return [...fromTemplate, ...extras].map((d) => ({ ...d, dueDate: s.placements[d.key] ?? null }));
+    return [...fromTemplate, ...extras].map((d) => ({
+      ...d,
+      dueDate: s.placements[d.key] ?? null,
+    }));
   }, [s.snapshot, s.removed, s.extras, s.placements]);
 
   const placed = drafts.filter((d) => d.dueDate !== null).length;
@@ -67,7 +89,8 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
   }, [drafts.length, placed, onSummary]);
 
   const removedItems = useMemo(
-    () => (s.snapshot ? draftsFromSnapshot(s.snapshot).filter((d) => s.removed.includes(d.key)) : []),
+    () =>
+      s.snapshot ? draftsFromSnapshot(s.snapshot).filter((d) => s.removed.includes(d.key)) : [],
     [s.snapshot, s.removed],
   );
 
@@ -85,7 +108,9 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
     if (unplaced.length === 0) return toast.error('배치할 항목이 없습니다.');
     const dates = evenSpread(unplaced.length, period, closures);
     s.placeMany(Object.fromEntries(unplaced.map((d, i) => [d.key, dates[i]])));
-    toast.success(`${unplaced.length}개 항목을 기간에 균등 배치했습니다. 날짜는 개별 수정할 수 있습니다.`);
+    toast.success(
+      `${unplaced.length}개 항목을 기간에 균등 배치했습니다. 날짜는 개별 수정할 수 있습니다.`,
+    );
   };
 
   const addExtra = () =>
@@ -121,36 +146,47 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
   });
 
   return (
-    <DndContext sensors={sensors} onDragStart={(e) => setActive(drafts.find((d) => d.key === e.active.id) ?? null)} onDragEnd={onDragEnd} onDragCancel={() => setActive(null)}>
-      <div className="grid grid-cols-[440px_minmax(0,1fr)] gap-6 px-7 pt-6 pb-8">
+    <DndContext
+      sensors={sensors}
+      onDragStart={(e) => setActive(drafts.find((d) => d.key === e.active.id) ?? null)}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => setActive(null)}
+    >
+      <div className="grid grid-cols-1 gap-6 px-4 pt-6 pb-8 md:px-7 lg:grid-cols-[440px_minmax(0,1fr)]">
         {/* task list */}
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-[14px] font-semibold">할 일 배치</span>
-            <span className="text-xs text-ink-faint">
+            <span className="text-ink-faint text-xs">
               {placed} / {drafts.length} 배치
             </span>
             <div className="flex-1" />
             <button
               type="button"
               onClick={spreadUnplaced}
-              className="flex h-7 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-xs font-medium text-ink-soft hover:border-ink-ghost"
+              className="border-line bg-surface text-ink-soft hover:border-ink-ghost flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium"
             >
               <Wand2 className="size-3.5" /> 남은 항목 균등 배치
             </button>
           </div>
-          <p className="-mt-1 text-xs leading-relaxed text-ink-faint">
-            각 할 일의 날짜를 선택하거나 오른쪽 달력으로 끌어다 놓습니다. 필요 없는 항목은 제외할 수 있습니다.
+          <p className="text-ink-faint -mt-1 text-xs leading-relaxed">
+            각 할 일의 날짜를 선택하거나 오른쪽 달력으로 끌어다 놓습니다. 필요 없는 항목은 제외할 수
+            있습니다.
           </p>
 
-          <div className="overflow-hidden rounded-xl border border-line bg-surface">
+          <div className="border-line bg-surface overflow-hidden rounded-xl border">
             {sorted.map((d) => {
               const isExtra = d.templateItemId === null;
               const warn = d.dueDate ? dateWarning(d.dueDate, period, closures) : null;
               return (
                 <DraggableRow key={d.key} draft={d}>
-                  <div className={cn('grid grid-cols-[18px_minmax(0,1fr)_128px_28px] items-center gap-2.5 border-b border-hairline px-2 py-2 last:border-b-0', d.dueDate === null && 'bg-warn-soft/40')}>
-                    <span className="flex cursor-grab items-center justify-center text-ink-ghost active:cursor-grabbing">
+                  <div
+                    className={cn(
+                      'border-hairline grid grid-cols-[18px_minmax(0,1fr)_108px_28px] items-center gap-2 border-b px-2 py-2 last:border-b-0 sm:grid-cols-[18px_minmax(0,1fr)_128px_28px] sm:gap-2.5',
+                      d.dueDate === null && 'bg-warn-soft/40',
+                    )}
+                  >
+                    <span className="text-ink-ghost flex cursor-grab touch-none items-center justify-center active:cursor-grabbing">
                       <GripVertical className="size-3.5" />
                     </span>
                     <div className="flex min-w-0 flex-col gap-0.5">
@@ -160,19 +196,30 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
                           onChange={(e) => s.updateExtra(d.key, { title: e.target.value })}
                           placeholder="할 일 이름"
                           autoFocus={d.title === ''}
-                          className="h-7 min-w-0 rounded-md border border-line bg-surface px-2 text-[13px] outline-none focus:border-ring"
+                          className="border-line bg-surface focus:border-ring h-7 min-w-0 rounded-md border px-2 text-[13px] outline-none"
                         />
                       ) : (
                         <div className="flex min-w-0 items-center gap-1.5">
                           <span className="truncate text-[13.5px] font-medium">{d.title}</span>
-                          {!d.required ? <span className="shrink-0 text-[10.5px] text-ink-faint">선택</span> : null}
+                          {!d.required ? (
+                            <span className="text-ink-faint shrink-0 text-[10.5px]">선택</span>
+                          ) : null}
                         </div>
                       )}
-                      <div className="flex items-center gap-1.5 text-[11px] text-ink-faint">
+                      <div className="text-ink-faint flex items-center gap-1.5 text-[11px]">
                         {d.categoryName ? <span>{d.categoryName}</span> : <span>직접 추가</span>}
-                        {d.checklist.length > 0 ? <span>· 체크리스트 {d.checklist.length}</span> : null}
+                        {d.checklist.length > 0 ? (
+                          <span>· 체크리스트 {d.checklist.length}</span>
+                        ) : null}
                         {warn ? (
-                          <span className={cn('rounded px-1.5 py-px text-[10.5px] font-semibold', warn === 'OUT_OF_RANGE' ? 'bg-danger-soft text-sun' : 'bg-warn-soft text-warn')}>
+                          <span
+                            className={cn(
+                              'rounded px-1.5 py-px text-[10.5px] font-semibold',
+                              warn === 'OUT_OF_RANGE'
+                                ? 'bg-danger-soft text-sun'
+                                : 'bg-warn-soft text-warn',
+                            )}
+                          >
                             {WARNING_LABEL[warn]}
                           </span>
                         ) : null}
@@ -191,7 +238,7 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
                       type="button"
                       onClick={() => (isExtra ? s.removeExtra(d.key) : s.remove(d.key))}
                       aria-label="제외"
-                      className="flex size-7 items-center justify-center rounded text-ink-ghost hover:bg-app hover:text-ink"
+                      className="text-ink-ghost hover:bg-app hover:text-ink flex size-7 items-center justify-center rounded"
                     >
                       <X className="size-3.5" />
                     </button>
@@ -199,28 +246,39 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
                 </DraggableRow>
               );
             })}
-            {drafts.length === 0 ? <p className="px-3 py-4 text-[12.5px] text-ink-faint">배치할 할 일이 없습니다.</p> : null}
+            {drafts.length === 0 ? (
+              <p className="text-ink-faint px-3 py-4 text-[12.5px]">배치할 할 일이 없습니다.</p>
+            ) : null}
           </div>
 
           <button
             type="button"
             onClick={addExtra}
-            className="flex h-8 items-center gap-1.5 self-start rounded-md px-1.5 text-[12px] font-medium text-brand hover:bg-brand-soft/50"
+            className="text-brand hover:bg-brand-soft/50 flex h-8 items-center gap-1.5 self-start rounded-md px-1.5 text-[12px] font-medium"
           >
             <Plus className="size-3.5" strokeWidth={2} /> 할 일 추가
           </button>
 
           {removedItems.length > 0 ? (
-            <div className="rounded-lg border border-dashed border-line px-3 py-2.5 text-xs text-ink-faint">
+            <div className="border-line text-ink-faint rounded-lg border border-dashed px-3 py-2.5 text-xs">
               <div className="mb-1.5 flex items-center gap-2">
                 <span className="font-medium">제외한 항목 {removedItems.length}개</span>
-                <button type="button" onClick={s.restoreAll} className="ml-auto flex items-center gap-1 text-brand hover:underline">
+                <button
+                  type="button"
+                  onClick={s.restoreAll}
+                  className="text-brand ml-auto flex items-center gap-1 hover:underline"
+                >
                   <RotateCcw className="size-3" /> 모두 되돌리기
                 </button>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {removedItems.map((d) => (
-                  <button key={d.key} type="button" onClick={() => s.restore(d.key)} className="rounded-md border border-line bg-surface px-2 py-0.5 hover:border-ink-ghost">
+                  <button
+                    key={d.key}
+                    type="button"
+                    onClick={() => s.restore(d.key)}
+                    className="border-line bg-surface hover:border-ink-ghost rounded-md border px-2 py-0.5"
+                  >
                     {d.title}
                   </button>
                 ))}
@@ -234,7 +292,7 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
           <div className="flex items-center gap-2">
             <span className="size-2.5 rounded-sm" style={{ background: color.solid }} />
             <span className="text-[14px] font-semibold">{s.form.name || s.snapshot?.name}</span>
-            <span className="text-xs text-ink-faint">
+            <span className="text-ink-faint text-xs">
               {formatMonthDayKo(startDate)} – {formatMonthDayKo(endDate)}
             </span>
           </div>
@@ -253,7 +311,10 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
       </div>
       <DragOverlay dropAnimation={null}>
         {active ? (
-          <div className="rounded-md px-2 py-1 text-xs font-medium shadow-lg" style={{ background: color.bg, color: color.text }}>
+          <div
+            className="rounded-md px-2 py-1 text-xs font-medium shadow-lg"
+            style={{ background: color.bg, color: color.text }}
+          >
             {active.title || '할 일'}
           </div>
         ) : null}
@@ -265,7 +326,12 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
 function DraggableRow({ draft, children }: { draft: TaskDraft; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: draft.key });
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes} className={cn('touch-none', isDragging && 'opacity-40')}>
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={cn('touch-none', isDragging && 'opacity-40')}
+    >
       {children}
     </div>
   );
@@ -289,11 +355,11 @@ function MiniMonth({
   const weeks = monthGrid(monthStart);
   const [y, m] = monthStart.split('-').map(Number);
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-surface">
-      <div className="flex h-9 items-center border-b border-line px-3 text-[13px] font-semibold">
+    <div className="border-line bg-surface overflow-hidden rounded-xl border">
+      <div className="border-line flex h-9 items-center border-b px-3 text-[13px] font-semibold">
         {y}년 {m}월
       </div>
-      <div className="grid grid-cols-7 border-b border-line text-[11px] font-medium text-ink-faint">
+      <div className="border-line text-ink-faint grid grid-cols-7 border-b text-[11px] font-medium">
         {['월', '화', '수', '목', '금', '토', '일'].map((w, i) => (
           <div key={w} className={cn('px-2 py-1', i === 5 && 'text-sat', i === 6 && 'text-sun')}>
             {w}
@@ -301,13 +367,15 @@ function MiniMonth({
         ))}
       </div>
       {weeks.map((week) => (
-        <div key={week[0]} className="grid grid-cols-7 border-b border-hairline last:border-b-0">
+        <div key={week[0]} className="border-hairline grid grid-cols-7 border-b last:border-b-0">
           {week.map((date) => (
             <MiniDay
               key={date}
               date={date}
               inMonth={date.slice(0, 7) === monthStart.slice(0, 7)}
-              inPeriod={compareISO(date, period.startDate) >= 0 && compareISO(date, period.endDate) <= 0}
+              inPeriod={
+                compareISO(date, period.startDate) >= 0 && compareISO(date, period.endDate) <= 0
+              }
               closure={closureNames.get(date)}
               tasks={byDate.get(date) ?? []}
               color={color}
@@ -343,18 +411,31 @@ function MiniDay({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex min-h-[64px] flex-col gap-0.5 border-r border-hairline p-1 last:border-r-0',
+        'border-hairline flex min-h-[64px] flex-col gap-0.5 border-r p-1 last:border-r-0',
         !inMonth && 'bg-app/60',
         inMonth && !inPeriod && 'bg-weekend',
         closure && inMonth && 'bg-holiday',
-        isOver && 'ring-2 ring-brand/50 ring-inset',
+        isOver && 'ring-brand/50 ring-2 ring-inset',
       )}
     >
       <div className="flex items-center gap-1 text-[10.5px]">
-        <span className={cn('font-medium', !inMonth ? 'text-ink-ghost' : closure || w === 0 ? 'text-sun' : w === 6 ? 'text-sat' : inPeriod ? 'text-ink' : 'text-ink-faint')}>
+        <span
+          className={cn(
+            'font-medium',
+            !inMonth
+              ? 'text-ink-ghost'
+              : closure || w === 0
+                ? 'text-sun'
+                : w === 6
+                  ? 'text-sat'
+                  : inPeriod
+                    ? 'text-ink'
+                    : 'text-ink-faint',
+          )}
+        >
           {Number(date.slice(8, 10))}
         </span>
-        {closure && inMonth ? <span className="truncate text-sun/80">{closure}</span> : null}
+        {closure && inMonth ? <span className="text-sun/80 truncate">{closure}</span> : null}
       </div>
       {inMonth
         ? tasks.map((t) => (

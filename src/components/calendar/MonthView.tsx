@@ -44,14 +44,18 @@ export function MonthView({
       list.push(t);
       map.set(t.dueDate, list);
     }
-    for (const list of map.values()) list.sort((a, b) => Number(a.done) - Number(b.done) || a.id - b.id);
+    for (const list of map.values())
+      list.sort((a, b) => Number(a.done) - Number(b.done) || a.id - b.id);
     return map;
   }, [tasks]);
 
   const gridFrom = weeks[0][0];
   const gridTo = weeks[weeks.length - 1][6];
   const visiblePrograms = useMemo(
-    () => programs.filter((p) => compareISO(p.endDate, gridFrom) >= 0 && compareISO(p.startDate, gridTo) <= 0),
+    () =>
+      programs.filter(
+        (p) => compareISO(p.endDate, gridFrom) >= 0 && compareISO(p.startDate, gridTo) <= 0,
+      ),
     [programs, gridFrom, gridTo],
   );
   const lanes = useMemo(
@@ -60,10 +64,13 @@ export function MonthView({
   );
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col bg-surface">
-      <div className="grid h-8 shrink-0 grid-cols-7 border-b border-line text-[11.5px] font-medium text-ink-faint">
+    <div className="bg-surface flex min-w-0 flex-1 flex-col">
+      <div className="border-line text-ink-faint grid h-8 shrink-0 grid-cols-7 border-b text-[11.5px] font-medium">
         {WEEKDAYS.map((w, i) => (
-          <div key={w} className={cn('flex items-center pl-2.5', i === 5 && 'text-sat', i === 6 && 'text-sun')}>
+          <div
+            key={w}
+            className={cn('flex items-center pl-2.5', i === 5 && 'text-sat', i === 6 && 'text-sun')}
+          >
             {w}
           </div>
         ))}
@@ -75,7 +82,10 @@ export function MonthView({
         style={{ gridTemplateRows: `repeat(${weeks.length}, minmax(0, 1fr))` }}
       >
         {weeks.map((week) => (
-          <div key={week[0]} className="relative grid min-h-0 grid-cols-7 border-b border-line last:border-b-0">
+          <div
+            key={week[0]}
+            className="border-line relative grid min-h-0 grid-cols-7 border-b last:border-b-0"
+          >
             {week.map((date) => (
               <DayCell
                 key={date}

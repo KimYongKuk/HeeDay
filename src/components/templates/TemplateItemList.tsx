@@ -9,7 +9,12 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { LibraryPicker } from '@/components/templates/LibraryPicker';
 import { TemplateItemRow, TemplateRowHeader } from '@/components/templates/TemplateItemRow';
 import type { ActionItemDto } from '@/lib/domain/dto';
@@ -48,11 +53,17 @@ export function TemplateItemList({
   return (
     <section className="flex flex-col gap-2">
       <TemplateRowHeader />
-      <div className="overflow-hidden rounded-[10px] border border-line bg-surface">
+      <div className="border-line bg-surface overflow-hidden rounded-[10px] border">
         {items.length === 0 ? (
-          <p className="px-3 py-4 text-[12.5px] text-ink-faint">등록된 할 일이 없습니다. 할 일 목록에서 추가하세요.</p>
+          <p className="text-ink-faint px-3 py-4 text-[12.5px]">
+            등록된 할 일이 없습니다. 할 일 목록에서 추가하세요.
+          </p>
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
             <SortableContext items={keys} strategy={verticalListSortingStrategy}>
               {items.map((it, index) => (
                 <TemplateItemRow

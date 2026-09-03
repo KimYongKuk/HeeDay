@@ -18,20 +18,33 @@ import type { ISODate } from '@/lib/domain/types';
 import { cn } from '@/lib/utils';
 import { isISODate } from '@/lib/utils/dates';
 
-export function CalendarDnd({ children, onMove }: { children: ReactNode; onMove: (task: CalendarTaskDto, date: ISODate) => void }) {
+export function CalendarDnd({
+  children,
+  onMove,
+}: {
+  children: ReactNode;
+  onMove: (task: CalendarTaskDto, date: ISODate) => void;
+}) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const [active, setActive] = useState<CalendarTaskDto | null>(null);
 
-  const onDragStart = (e: DragStartEvent) => setActive((e.active.data.current as CalendarTaskDto) ?? null);
+  const onDragStart = (e: DragStartEvent) =>
+    setActive((e.active.data.current as CalendarTaskDto) ?? null);
   const onDragEnd = (e: DragEndEvent) => {
     setActive(null);
     const task = e.active.data.current as CalendarTaskDto | undefined;
     const date = e.over?.id;
-    if (task && typeof date === 'string' && isISODate(date) && date !== task.dueDate) onMove(task, date);
+    if (task && typeof date === 'string' && isISODate(date) && date !== task.dueDate)
+      onMove(task, date);
   };
 
   return (
-    <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setActive(null)}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => setActive(null)}
+    >
       {children}
       <DragOverlay dropAnimation={null}>
         {active ? (
@@ -45,18 +58,34 @@ export function CalendarDnd({ children, onMove }: { children: ReactNode; onMove:
 }
 
 export function DraggableTask({ task, children }: { task: CalendarTaskDto; children: ReactNode }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `task-${task.id}`, data: task });
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `task-${task.id}`,
+    data: task,
+  });
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes} className={cn('min-w-0 touch-none', isDragging && 'opacity-30')}>
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={cn('min-w-0 touch-none', isDragging && 'opacity-30')}
+    >
       {children}
     </div>
   );
 }
 
-export function DroppableDay({ date, className, children }: { date: ISODate; className?: string; children: ReactNode }) {
+export function DroppableDay({
+  date,
+  className,
+  children,
+}: {
+  date: ISODate;
+  className?: string;
+  children: ReactNode;
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: date });
   return (
-    <div ref={setNodeRef} className={cn(className, isOver && 'ring-2 ring-brand/40 ring-inset')}>
+    <div ref={setNodeRef} className={cn(className, isOver && 'ring-brand/40 ring-2 ring-inset')}>
       {children}
     </div>
   );

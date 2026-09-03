@@ -19,7 +19,10 @@ export function TaskChip({
   const p = PALETTE[task.programColor];
   return (
     <div
-      className={cn('flex h-[22px] min-w-0 items-center gap-1.5 rounded-md pr-2 pl-[5px] text-xs font-medium', muted && 'opacity-60')}
+      className={cn(
+        'flex h-[22px] min-w-0 items-center gap-1.5 rounded-md pr-2 pl-[5px] text-xs font-medium',
+        muted && 'opacity-60',
+      )}
       style={{ background: p.bg, color: p.text }}
       title={`${task.programName} · ${task.title}`}
     >

@@ -1,7 +1,13 @@
 'use client';
 
 import { ChevronLeft, ChevronRight, Printer } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { PALETTE } from '@/lib/domain/colors';
 import type { ProgramListDto } from '@/lib/domain/dto';
 import { cn } from '@/lib/utils';
@@ -41,15 +47,17 @@ export function CalendarToolbar({
   ];
 
   return (
-    <div className="flex h-[52px] shrink-0 items-center gap-3 px-5 print:hidden">
-      <h1 className="text-lg font-semibold tracking-[-0.01em]">{title}</h1>
-      {subtitle ? <span className="text-[12.5px] text-ink-faint">{subtitle}</span> : null}
-      <div className="ml-1 flex items-center gap-0.5">
+    <div className="flex min-h-[52px] shrink-0 flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 md:px-5 print:hidden">
+      <h1 className="text-[17px] font-semibold tracking-[-0.01em] md:text-lg">{title}</h1>
+      {subtitle ? (
+        <span className="text-ink-faint hidden text-[12.5px] sm:inline">{subtitle}</span>
+      ) : null}
+      <div className="flex items-center gap-0.5 md:ml-1">
         <button
           type="button"
           onClick={onPrev}
           aria-label="이전"
-          className="flex size-7 items-center justify-center rounded-md text-ink-muted hover:bg-surface hover:text-ink"
+          className="text-ink-muted hover:bg-surface hover:text-ink flex size-7 items-center justify-center rounded-md"
         >
           <ChevronLeft className="size-4" />
         </button>
@@ -57,7 +65,7 @@ export function CalendarToolbar({
           type="button"
           onClick={onNext}
           aria-label="다음"
-          className="flex size-7 items-center justify-center rounded-md text-ink-muted hover:bg-surface hover:text-ink"
+          className="text-ink-muted hover:bg-surface hover:text-ink flex size-7 items-center justify-center rounded-md"
         >
           <ChevronRight className="size-4" />
         </button>
@@ -65,7 +73,7 @@ export function CalendarToolbar({
       <button
         type="button"
         onClick={onToday}
-        className="h-7 rounded-md border border-line bg-surface px-2.5 text-[12.5px] font-medium text-ink-soft hover:border-ink-ghost"
+        className="border-line bg-surface text-ink-soft hover:border-ink-ghost h-7 rounded-md border px-2.5 text-[12.5px] font-medium"
       >
         오늘
       </button>
@@ -75,7 +83,10 @@ export function CalendarToolbar({
         value={programId ? String(programId) : 'ALL'}
         onValueChange={(v) => onProgramChange(!v || v === 'ALL' ? null : Number(v))}
       >
-        <SelectTrigger size="sm" className="h-[30px] min-w-[150px] bg-surface text-[12.5px]">
+        <SelectTrigger
+          size="sm"
+          className="bg-surface h-[30px] max-w-[180px] text-[12.5px] md:min-w-[150px]"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent align="end">
@@ -83,7 +94,12 @@ export function CalendarToolbar({
             const p = programs.find((x) => String(x.id) === it.value);
             return (
               <SelectItem key={it.value} value={it.value}>
-                {p ? <span className="size-2 rounded-full" style={{ background: PALETTE[p.color].solid }} /> : null}
+                {p ? (
+                  <span
+                    className="size-2 rounded-full"
+                    style={{ background: PALETTE[p.color].solid }}
+                  />
+                ) : null}
                 {it.label}
               </SelectItem>
             );
@@ -97,7 +113,7 @@ export function CalendarToolbar({
             type="button"
             onClick={() => onViewChange(v)}
             className={cn(
-              'flex h-[26px] items-center rounded-md px-3 text-ink-muted',
+              'text-ink-muted flex h-[26px] items-center rounded-md px-2.5 md:px-3',
               view === v && 'bg-surface text-ink shadow-[0_1px_2px_rgba(20,18,12,0.08)]',
             )}
           >
@@ -111,7 +127,7 @@ export function CalendarToolbar({
           onClick={onPrint}
           aria-label="인쇄"
           title="월간 캘린더 인쇄"
-          className="flex size-[30px] items-center justify-center rounded-md border border-line bg-surface text-ink-muted hover:border-ink-ghost hover:text-ink"
+          className="border-line bg-surface text-ink-muted hover:border-ink-ghost hover:text-ink hidden size-[30px] items-center justify-center rounded-md border md:flex"
         >
           <Printer className="size-4" />
         </button>

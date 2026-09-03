@@ -14,10 +14,8 @@ export function TemplateList() {
   const { data: templates = [], isLoading } = useTemplates();
   const create = useCreateTemplate();
 
-  const activeId = (() => {
-    const m = /^\/templates\/(\d+)/.exec(pathname);
-    return m ? Number(m[1]) : null;
-  })();
+  const match = /^\/templates\/(\d+)/.exec(pathname);
+  const activeId = match ? Number(match[1]) : null;
 
   const createNew = async () => {
     try {
@@ -29,9 +27,14 @@ export function TemplateList() {
   };
 
   return (
-    <aside className="flex w-[232px] shrink-0 flex-col gap-0.5 border-r border-line px-2.5 py-4">
+    <aside
+      className={cn(
+        'md:border-line flex w-full shrink-0 flex-col gap-0.5 px-2.5 py-4 md:w-[232px] md:border-r',
+        activeId !== null && 'hidden md:flex',
+      )}
+    >
       <div className="flex items-center px-1.5 pb-2.5">
-        <span className="text-xs font-semibold text-ink-faint">
+        <span className="text-ink-faint text-xs font-semibold">
           {isLoading ? '양식' : `양식 ${templates.length}개`}
         </span>
         <div className="flex-1" />
@@ -39,7 +42,7 @@ export function TemplateList() {
           type="button"
           onClick={createNew}
           disabled={create.isPending}
-          className="flex items-center gap-1 text-xs font-semibold text-brand hover:text-brand-deep disabled:opacity-50"
+          className="text-brand hover:text-brand-deep flex items-center gap-1 text-xs font-semibold disabled:opacity-50"
         >
           <Plus className="size-[13px]" strokeWidth={2} />새 양식
         </button>
@@ -51,13 +54,18 @@ export function TemplateList() {
             key={t.id}
             href={`/templates/${t.id}`}
             className={cn(
-              'flex h-10 items-center gap-2.5 rounded-lg px-3 text-[13.5px] text-ink-soft transition-colors hover:bg-surface/70',
-              active && 'bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(20,18,12,0.06)]',
+              'text-ink-soft hover:bg-surface/70 flex h-11 items-center gap-2.5 rounded-lg px-3 text-[13.5px] transition-colors md:h-10',
+              active && 'bg-surface text-ink font-semibold shadow-[0_1px_2px_rgba(20,18,12,0.06)]',
             )}
           >
-            <span className="size-2 shrink-0 rounded-full" style={{ background: PALETTE[t.color].solid }} />
+            <span
+              className="size-2 shrink-0 rounded-full"
+              style={{ background: PALETTE[t.color].solid }}
+            />
             <span className="truncate">{t.name}</span>
-            <span className="ml-auto text-[11.5px] font-normal text-ink-faint">{t.itemCount}</span>
+            <span className="text-ink-faint ml-auto text-[11.5px] font-normal">
+              할 일 {t.itemCount}
+            </span>
           </Link>
         );
       })}

@@ -1,8 +1,9 @@
 'use client';
 
-import { Plus, Search } from 'lucide-react';
+import { ChevronLeft, Plus, Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/common/PageHeader';
 import { LibraryDetail } from '@/components/library/LibraryDetail';
@@ -37,13 +38,16 @@ export function LibraryScreen() {
   const filtered = useMemo(() => {
     const q = search.trim();
     return items.filter(
-      (it) => (categoryId === 'ALL' || it.categoryId === categoryId) && (q === '' || it.name.includes(q)),
+      (it) =>
+        (categoryId === 'ALL' || it.categoryId === categoryId) && (q === '' || it.name.includes(q)),
     );
   }, [items, categoryId, search]);
 
   const onDeleteItem = async (item: ActionItemDto) => {
     if (item.usageCount > 0) {
-      toast.error(`'${item.name}'은(는) ${item.usageCount}개 양식에서 사용 중이라 삭제할 수 없습니다.`);
+      toast.error(
+        `'${item.name}'은(는) ${item.usageCount}개 양식에서 사용 중이라 삭제할 수 없습니다.`,
+      );
       return;
     }
     if (!window.confirm(`'${item.name}' 항목을 삭제하시겠습니까?`)) return;
@@ -86,13 +90,13 @@ export function LibraryScreen() {
   return (
     <>
       <PageHeader title="할 일 목록" subtitle={`총 ${items.length}개`}>
-        <label className="flex h-[30px] w-[200px] items-center gap-2 rounded-md border border-line bg-surface px-2.5 text-[12.5px] text-ink-faint focus-within:border-ink-ghost">
+        <label className="border-line bg-surface text-ink-faint focus-within:border-ink-ghost flex h-[30px] w-[200px] items-center gap-2 rounded-md border px-2.5 text-[12.5px]">
           <Search className="size-3.5" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="항목 검색"
-            className="w-full bg-transparent text-ink outline-none placeholder:text-ink-faint"
+            className="text-ink placeholder:text-ink-faint w-full bg-transparent outline-none"
           />
         </label>
         <Button size="sm" onClick={() => setSelected('new')} className="h-[30px] font-semibold">
@@ -101,24 +105,42 @@ export function LibraryScreen() {
         </Button>
       </PageHeader>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[560px_minmax(0,1fr)] border-t border-line">
-        <LibraryList
-          items={filtered}
-          categories={categories}
-          loading={isLoading}
-          selectedId={typeof selected === 'number' ? selected : null}
-          onSelect={setSelected}
-          onDelete={onDeleteItem}
-          categoryId={categoryId}
-          onCategoryChange={setCategoryId}
-          onAddCategory={onAddCategory}
-          onRemoveCategory={onRemoveCategory}
-        />
-        <div className="flex min-h-0 flex-col overflow-y-auto">
+      <div className="border-line grid min-h-0 flex-1 grid-cols-1 border-t md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] xl:grid-cols-[560px_minmax(0,1fr)]">
+        <div className={cn('flex min-h-0 flex-col', selected !== null && 'hidden md:flex')}>
+          <LibraryList
+            items={filtered}
+            categories={categories}
+            loading={isLoading}
+            selectedId={typeof selected === 'number' ? selected : null}
+            onSelect={setSelected}
+            onDelete={onDeleteItem}
+            categoryId={categoryId}
+            onCategoryChange={setCategoryId}
+            onAddCategory={onAddCategory}
+            onRemoveCategory={onRemoveCategory}
+          />
+        </div>
+        <div
+          className={cn(
+            'flex min-h-0 flex-col overflow-y-auto',
+            selected === null && 'hidden md:flex',
+          )}
+        >
+          {selected !== null ? (
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="text-brand flex items-center gap-1 px-4 pt-3 text-[12.5px] font-medium md:hidden"
+            >
+              <ChevronLeft className="size-3.5" /> 목록으로
+            </button>
+          ) : null}
           {selected === null ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-1 p-10 text-center">
               <p className="text-[15px] font-semibold">항목을 선택하세요</p>
-              <p className="text-[13px] text-ink-faint">왼쪽 목록에서 항목을 선택하면 상세 정보를 편집할 수 있습니다.</p>
+              <p className="text-ink-faint text-[13px]">
+                왼쪽 목록에서 항목을 선택하면 상세 정보를 편집할 수 있습니다.
+              </p>
             </div>
           ) : (
             <LibraryDetail

@@ -7,7 +7,7 @@ export default function SettingsPage() {
   return (
     <>
       <PageHeader title="설정" />
-      <div className="flex flex-1 border-t border-line bg-surface">
+      <div className="border-line bg-surface flex flex-1 border-t">
         <SettingsScreen />
       </div>
     </>

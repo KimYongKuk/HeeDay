@@ -8,9 +8,21 @@ import { weekSegment } from '@/lib/services/calendarLayout';
 export const MAX_LANES = 3;
 
 /** Thin bar per program across its period (start → end) under the day-number row. */
-export function LaneLayer({ week, programs, lanes }: { week: ISODate[]; programs: ProgramListDto[]; lanes: Map<number, number> }) {
+export function LaneLayer({
+  week,
+  programs,
+  lanes,
+}: {
+  week: ISODate[];
+  programs: ProgramListDto[];
+  lanes: Map<number, number>;
+}) {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-x-0 top-8 grid grid-cols-7 gap-y-1" style={{ gridAutoRows: '4px' }}>
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 top-8 grid grid-cols-7 gap-y-1"
+      style={{ gridAutoRows: '4px' }}
+    >
       {programs.flatMap((p) => {
         const lane = lanes.get(p.id);
         if (lane === undefined || lane >= MAX_LANES) return [];

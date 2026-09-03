@@ -25,8 +25,8 @@ export function ColorSwatches({
           title={PALETTE[key].label}
           onClick={() => onChange(key)}
           className={cn(
-            'rounded-md transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none',
-            value === key && 'outline-2 outline-offset-2 outline-ink',
+            'focus-visible:ring-ring/50 rounded-md transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:outline-none',
+            value === key && 'outline-ink outline-2 outline-offset-2',
           )}
           style={{ width: size, height: size, background: PALETTE[key].solid }}
         />

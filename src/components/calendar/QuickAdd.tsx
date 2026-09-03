@@ -4,7 +4,13 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ApiClientError } from '@/lib/api/client';
 import { useCreateTask } from '@/lib/api/queries';
 import { PALETTE } from '@/lib/domain/colors';
@@ -35,7 +41,11 @@ export function QuickAdd({
     if (!effectiveProgram) return toast.error('프로그램을 선택하세요.');
     if (title.trim() === '') return toast.error('할 일 이름을 입력하세요.');
     try {
-      await create.mutateAsync({ programId: Number(effectiveProgram), title: title.trim(), dueDate: date });
+      await create.mutateAsync({
+        programId: Number(effectiveProgram),
+        title: title.trim(),
+        dueDate: date,
+      });
       setTitle('');
       setOpen(false);
     } catch (err) {
@@ -51,7 +61,7 @@ export function QuickAdd({
             type="button"
             aria-label="할 일 추가"
             className={cn(
-              'flex size-5 items-center justify-center rounded text-ink-ghost hover:bg-app hover:text-ink',
+              'text-ink-ghost hover:bg-app hover:text-ink flex size-5 items-center justify-center rounded',
               className,
             )}
           />
@@ -62,7 +72,9 @@ export function QuickAdd({
       <PopoverContent align="start" className="w-72 gap-2.5 p-3">
         <div className="text-[12.5px] font-semibold">{formatMonthDayKo(date)} 할 일 추가</div>
         {candidates.length === 0 ? (
-          <p className="text-xs text-ink-faint">진행 중인 프로그램이 없습니다. 일정을 먼저 등록하세요.</p>
+          <p className="text-ink-faint text-xs">
+            진행 중인 프로그램이 없습니다. 일정을 먼저 등록하세요.
+          </p>
         ) : (
           <>
             <Select
@@ -70,13 +82,16 @@ export function QuickAdd({
               value={effectiveProgram}
               onValueChange={(v) => setProgramId(v)}
             >
-              <SelectTrigger size="sm" className="w-full bg-surface">
+              <SelectTrigger size="sm" className="bg-surface w-full">
                 <SelectValue placeholder="프로그램 선택" />
               </SelectTrigger>
               <SelectContent>
                 {candidates.map((p) => (
                   <SelectItem key={p.id} value={String(p.id)}>
-                    <span className="size-2 rounded-full" style={{ background: PALETTE[p.color].solid }} />
+                    <span
+                      className="size-2 rounded-full"
+                      style={{ background: PALETTE[p.color].solid }}
+                    />
                     {p.name}
                   </SelectItem>
                 ))}
@@ -88,13 +103,13 @@ export function QuickAdd({
               onKeyDown={(e) => e.key === 'Enter' && void submit()}
               autoFocus
               placeholder="할 일 이름"
-              className="h-8 rounded-md border border-line bg-surface px-2.5 text-[13px] outline-none focus:border-ring"
+              className="border-line bg-surface focus:border-ring h-8 rounded-md border px-2.5 text-[13px] outline-none"
             />
             <button
               type="button"
               onClick={submit}
               disabled={create.isPending}
-              className="h-8 rounded-md bg-brand text-xs font-semibold text-white hover:bg-brand-deep disabled:opacity-50"
+              className="bg-brand hover:bg-brand-deep h-8 rounded-md text-xs font-semibold text-white disabled:opacity-50"
             >
               추가
             </button>

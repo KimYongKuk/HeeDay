@@ -11,7 +11,13 @@ import type { ISODate } from '@/lib/domain/types';
 import { cn } from '@/lib/utils';
 import { formatMonthDayKo, weekdayISO } from '@/lib/utils/dates';
 
-export function CalendarItem({ task, onToggle }: { task: CalendarTaskDto; onToggle: (t: CalendarTaskDto) => void }) {
+export function CalendarItem({
+  task,
+  onToggle,
+}: {
+  task: CalendarTaskDto;
+  onToggle: (t: CalendarTaskDto) => void;
+}) {
   return (
     <DraggableTask task={task}>
       <TaskPopover task={task}>
@@ -56,21 +62,35 @@ export function DayCell({
     <DroppableDay
       date={date}
       className={cn(
-        'group flex min-w-0 flex-col border-r border-line px-1.5 pt-1.5 pb-1 last:border-r-0',
-        holidayName ? 'bg-holiday' : isToday ? 'bg-today' : isSat || isSun ? 'bg-weekend' : 'bg-surface',
+        'group border-line flex min-w-0 flex-col border-r px-1.5 pt-1.5 pb-1 last:border-r-0',
+        holidayName
+          ? 'bg-holiday'
+          : isToday
+            ? 'bg-today'
+            : isSat || isSun
+              ? 'bg-weekend'
+              : 'bg-surface',
       )}
     >
       <div className="flex h-[22px] items-center gap-1.5 text-xs font-medium">
         {isToday ? (
-          <span className="-ml-1 flex size-[22px] items-center justify-center rounded-full bg-brand text-white">{day}</span>
+          <span className="bg-brand -ml-1 flex size-[22px] items-center justify-center rounded-full text-white">
+            {day}
+          </span>
         ) : (
           <span className={cn(numberColor, !inMonth && 'text-ink-ghost')}>
             {showMonth ? `${Number(date.slice(5, 7))}월 ` : ''}
             {day}
           </span>
         )}
-        {holidayName ? <span className="truncate text-[11px] text-sun/80">{holidayName}</span> : null}
-        <QuickAdd date={date} programs={programs} className="ml-auto opacity-0 group-hover:opacity-100 data-popup-open:opacity-100 print:hidden" />
+        {holidayName ? (
+          <span className="text-sun/80 truncate text-[11px]">{holidayName}</span>
+        ) : null}
+        <QuickAdd
+          date={date}
+          programs={programs}
+          className="ml-auto opacity-0 group-hover:opacity-100 data-popup-open:opacity-100 print:hidden"
+        />
       </div>
 
       <div className={cn('mt-[30px] flex min-h-0 flex-col gap-[3px]', !inMonth && 'opacity-60')}>
@@ -81,7 +101,10 @@ export function DayCell({
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger
               render={
-                <button type="button" className="flex h-[18px] items-center rounded px-1.5 text-left text-[11.5px] text-ink-faint hover:bg-app hover:text-ink" />
+                <button
+                  type="button"
+                  className="text-ink-faint hover:bg-app hover:text-ink flex h-[18px] items-center rounded px-1.5 text-left text-[11.5px]"
+                />
               }
             >
               외 {hidden}건
