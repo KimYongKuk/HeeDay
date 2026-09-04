@@ -18,6 +18,7 @@ import {
   useTemplate,
 } from '@/lib/api/queries';
 import { PALETTE } from '@/lib/domain/colors';
+import { DEFAULT_ASSIGNEE } from '@/lib/domain/defaults';
 import type { ActionItemDto, TemplateDetailDto } from '@/lib/domain/dto';
 import { templateInputSchema } from '@/lib/domain/zod';
 import { draftFromDto, draftToInput, type DraftItem, type TemplateDraft } from './types';
@@ -139,7 +140,7 @@ export function TemplateEditor({ id }: { id: number }) {
           value={draft.name}
           onChange={(e) => patch((d) => ({ ...d, name: e.target.value }))}
           aria-label="양식 이름"
-          className="hover:border-line focus:border-line focus:bg-surface min-w-[160px] max-w-[360px] min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 text-lg font-semibold tracking-[-0.01em] outline-none"
+          className="hover:border-line focus:border-line focus:bg-surface max-w-[360px] min-w-0 min-w-[160px] flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 text-lg font-semibold tracking-[-0.01em] outline-none"
         />
         <span className="text-ink-faint hidden shrink-0 text-[12.5px] sm:inline">
           등록된 일정 {data?.programCount ?? 0}건
@@ -175,7 +176,7 @@ export function TemplateEditor({ id }: { id: number }) {
             <Input
               value={draft.defaultAssignee}
               onChange={(e) => patch((d) => ({ ...d, defaultAssignee: e.target.value }))}
-              placeholder="예: 김○○"
+              placeholder={DEFAULT_ASSIGNEE}
               className="bg-surface h-[34px]"
             />
           </label>

@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { getDb } from '@/lib/db/client';
 import { listClosures } from '@/lib/db/repos/closures';
 import { programTemplates } from '@/lib/db/schema';
+import { DEFAULT_ASSIGNEE } from '@/lib/domain/defaults';
 import type { ColorKey } from '@/lib/domain/enums';
 import type { ISODate } from '@/lib/domain/types';
 import { buildClosureSet, draftsFromSnapshot, evenSpread } from '@/lib/services/placement';
@@ -29,14 +30,26 @@ async function register(opts: {
   if (!template) throw new Error(`template not found: ${opts.templateName}`);
   const snapshot = await buildTemplateSnapshot(db, template.id);
   if (!snapshot) throw new Error('snapshot failed');
-  const closures = buildClosureSet(await listClosures(db, { from: opts.startDate, to: opts.endDate }));
+  const closures = buildClosureSet(
+    await listClosures(db, { from: opts.startDate, to: opts.endDate }),
+  );
   const drafts = draftsFromSnapshot(snapshot);
-  const dates = evenSpread(drafts.length, { startDate: opts.startDate, endDate: opts.endDate }, closures);
+  const dates = evenSpread(
+    drafts.length,
+    { startDate: opts.startDate, endDate: opts.endDate },
+    closures,
+  );
 
   const result = await approveProgram(db, {
     idempotencyKey: opts.key,
     templateId: template.id,
-    program: { name: opts.name, startDate: opts.startDate, endDate: opts.endDate, assignee: opts.assignee, color: opts.color },
+    program: {
+      name: opts.name,
+      startDate: opts.startDate,
+      endDate: opts.endDate,
+      assignee: opts.assignee,
+      color: opts.color,
+    },
     tasks: drafts.map((d, i) => ({
       templateItemId: d.templateItemId,
       title: d.title,
@@ -45,7 +58,9 @@ async function register(opts: {
       checklist: d.checklist,
     })),
   });
-  console.log(`  ${opts.name}: program #${result.programId}${result.reused ? ' (already registered)' : ` · ${result.taskCount} tasks`}`);
+  console.log(
+    `  ${opts.name}: program #${result.programId}${result.reused ? ' (already registered)' : ` · ${result.taskCount} tasks`}`,
+  );
 }
 
 export async function seedSamplePrograms(): Promise<void> {
@@ -55,7 +70,7 @@ export async function seedSamplePrograms(): Promise<void> {
     name: '2026 상반기 웰다잉 프로그램',
     startDate: '2026-06-02',
     endDate: '2026-07-07',
-    assignee: '김○○',
+    assignee: DEFAULT_ASSIGNEE,
     color: 'rose',
   });
   await register({
@@ -64,7 +79,7 @@ export async function seedSamplePrograms(): Promise<void> {
     name: '스마트폰 활용교실 2기',
     startDate: '2026-05-13',
     endDate: '2026-06-24',
-    assignee: '이○○',
+    assignee: DEFAULT_ASSIGNEE,
     color: 'amber',
   });
 }

@@ -10,7 +10,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import { GripVertical, Plus, RotateCcw, Wand2, X } from 'lucide-react';
+import { CopyPlus, GripVertical, Plus, RotateCcw, Wand2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DateField } from '@/components/common/DateField';
@@ -21,10 +21,11 @@ import type { DateWarning, ISODate, TaskDraft } from '@/lib/domain/types';
 import { addMonthsISO, monthGrid } from '@/lib/services/calendarLayout';
 import {
   buildClosureSet,
+  buildWizardDrafts,
   dateWarning,
+  draftTitle,
   draftsFromSnapshot,
   evenSpread,
-  sortDrafts,
 } from '@/lib/services/placement';
 import { useWizardStore } from '@/stores/wizardStore';
 import { cn } from '@/lib/utils';
@@ -43,10 +44,48 @@ const WARNING_LABEL: Record<DateWarning, string> = {
   OUT_OF_RANGE: '기간 외',
 };
 
+/** dnd ids: a list row can spawn a new 회차, a calendar chip only moves. */
+const ROW = 'row:';
+const CHIP = 'chip:';
+
 export interface PlacementSummary {
   total: number;
   placed: number;
   unplaced: number;
+}
+
+interface DraftGroup {
+  baseKey: string;
+  drafts: TaskDraft[];
+}
+
+/** Groups drafts by base task, ordered by each group's earliest date (undated groups last). */
+function groupDrafts(drafts: TaskDraft[]): DraftGroup[] {
+  const groups: DraftGroup[] = [];
+  const byKey = new Map<string, DraftGroup>();
+  for (const d of drafts) {
+    let g = byKey.get(d.baseKey);
+    if (!g) {
+      g = { baseKey: d.baseKey, drafts: [] };
+      byKey.set(d.baseKey, g);
+      groups.push(g);
+    }
+    g.drafts.push(d);
+  }
+  const firstDate = (g: DraftGroup): ISODate | null =>
+    g.drafts.reduce<ISODate | null>(
+      (min, d) => (d.dueDate && (min === null || d.dueDate < min) ? d.dueDate : min),
+      null,
+    );
+  return groups
+    .map((g, i) => ({ g, i, date: firstDate(g) }))
+    .sort((a, b) => {
+      if (a.date === null && b.date === null) return a.i - b.i;
+      if (a.date === null) return 1;
+      if (b.date === null) return -1;
+      return compareISO(a.date, b.date) || a.i - b.i;
+    })
+    .map((x) => x.g);
 }
 
 export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => void }) {
@@ -64,29 +103,26 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
     [closureRows],
   );
 
-  const drafts: TaskDraft[] = useMemo(() => {
-    if (!s.snapshot) return [];
-    const fromTemplate = draftsFromSnapshot(s.snapshot).filter((d) => !s.removed.includes(d.key));
-    const extras: TaskDraft[] = s.extras.map((e) => ({
-      key: e.key,
-      templateItemId: null,
-      title: e.title,
-      categoryId: null,
-      categoryName: null,
-      dueDate: null,
-      required: true,
-      checklist: e.checklist,
-    }));
-    return [...fromTemplate, ...extras].map((d) => ({
-      ...d,
-      dueDate: s.placements[d.key] ?? null,
-    }));
-  }, [s.snapshot, s.removed, s.extras, s.placements]);
+  const drafts: TaskDraft[] = useMemo(
+    () =>
+      s.snapshot
+        ? buildWizardDrafts({
+            snapshot: s.snapshot,
+            removed: s.removed,
+            extras: s.extras,
+            occurrences: s.occurrences,
+            placements: s.placements,
+          })
+        : [],
+    [s.snapshot, s.removed, s.extras, s.occurrences, s.placements],
+  );
 
   const placed = drafts.filter((d) => d.dueDate !== null).length;
   useEffect(() => {
     onSummary({ total: drafts.length, placed, unplaced: drafts.length - placed });
   }, [drafts.length, placed, onSummary]);
+
+  const groups = useMemo(() => groupDrafts(drafts), [drafts]);
 
   const removedItems = useMemo(
     () =>
@@ -96,11 +132,33 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const [active, setActive] = useState<TaskDraft | null>(null);
+  const [addsSession, setAddsSession] = useState(false);
+
+  const draftFor = (id: string): TaskDraft | null => {
+    const key = id.startsWith(ROW) ? id.slice(ROW.length) : id.slice(CHIP.length);
+    return drafts.find((d) => d.key === key) ?? null;
+  };
+
+  const onDragStart = (id: string) => {
+    const d = draftFor(id);
+    setActive(d);
+    // Dragging an already-dated task out of the list adds another 회차 instead of moving it.
+    setAddsSession(id.startsWith(ROW) && d?.dueDate != null);
+  };
+
   const onDragEnd = (e: DragEndEvent) => {
-    setActive(null);
-    const key = String(e.active.id);
+    const id = String(e.active.id);
+    const d = draftFor(id);
     const date = e.over?.id;
-    if (typeof date === 'string' && isISODate(date)) s.place(key, date);
+    setActive(null);
+    setAddsSession(false);
+    if (!d || typeof date !== 'string' || !isISODate(date)) return;
+    if (id.startsWith(ROW) && d.dueDate !== null) {
+      s.addOccurrence(d.key, date);
+      toast.success(`${d.title} 회차를 추가했습니다.`);
+      return;
+    }
+    s.place(d.key, date);
   };
 
   const spreadUnplaced = () => {
@@ -115,6 +173,12 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
 
   const addExtra = () =>
     s.addExtra({ key: `adhoc:${crypto.randomUUID()}`, title: '', checklist: [] });
+
+  const addSession = (d: TaskDraft) => {
+    if (d.title.trim() === '') return toast.error('할 일 이름을 먼저 입력하세요.');
+    s.addOccurrence(d.key);
+    toast.success(`${d.title} 회차를 추가했습니다. 날짜를 지정하세요.`);
+  };
 
   // months covering the period (cap at 6 to keep the layout sane)
   const months = useMemo(() => {
@@ -135,22 +199,21 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
       list.push(d);
       map.set(d.dueDate, list);
     }
+    for (const list of map.values()) list.sort((a, b) => (a.session ?? 0) - (b.session ?? 0));
     return map;
   }, [drafts]);
 
   const color = PALETTE[s.form.color];
-  const sorted = [...drafts].sort((a, b) => {
-    // unplaced first in template order, then placed by date
-    if (a.dueDate === null && b.dueDate === null) return 0;
-    return sortDrafts(a, b);
-  });
 
   return (
     <DndContext
       sensors={sensors}
-      onDragStart={(e) => setActive(drafts.find((d) => d.key === e.active.id) ?? null)}
+      onDragStart={(e) => onDragStart(String(e.active.id))}
       onDragEnd={onDragEnd}
-      onDragCancel={() => setActive(null)}
+      onDragCancel={() => {
+        setActive(null);
+        setAddsSession(false);
+      }}
     >
       <div className="grid grid-cols-1 gap-6 px-4 pt-6 pb-8 md:px-7 lg:grid-cols-[440px_minmax(0,1fr)]">
         {/* task list */}
@@ -170,82 +233,116 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
             </button>
           </div>
           <p className="text-ink-faint -mt-1 text-xs leading-relaxed">
-            각 할 일의 날짜를 선택하거나 오른쪽 달력으로 끌어다 놓습니다. 필요 없는 항목은 제외할 수
-            있습니다.
+            각 할 일의 날짜를 선택하거나 오른쪽 달력으로 끌어다 놓습니다. 이미 날짜가 있는 할 일을
+            다시 끌어다 놓으면 회차가 추가됩니다. 필요 없는 항목은 제외할 수 있습니다.
           </p>
 
           <div className="border-line bg-surface overflow-hidden rounded-xl border">
-            {sorted.map((d) => {
-              const isExtra = d.templateItemId === null;
-              const warn = d.dueDate ? dateWarning(d.dueDate, period, closures) : null;
-              return (
-                <DraggableRow key={d.key} draft={d}>
-                  <div
-                    className={cn(
-                      'border-hairline grid grid-cols-[18px_minmax(0,1fr)_108px_28px] items-center gap-2 border-b px-2 py-2 last:border-b-0 sm:grid-cols-[18px_minmax(0,1fr)_128px_28px] sm:gap-2.5',
-                      d.dueDate === null && 'bg-warn-soft/40',
-                    )}
-                  >
-                    <span className="text-ink-ghost flex cursor-grab touch-none items-center justify-center active:cursor-grabbing">
-                      <GripVertical className="size-3.5" />
-                    </span>
-                    <div className="flex min-w-0 flex-col gap-0.5">
-                      {isExtra ? (
-                        <input
-                          value={d.title}
-                          onChange={(e) => s.updateExtra(d.key, { title: e.target.value })}
-                          placeholder="할 일 이름"
-                          autoFocus={d.title === ''}
-                          className="border-line bg-surface focus:border-ring h-7 min-w-0 rounded-md border px-2 text-[13px] outline-none"
-                        />
-                      ) : (
-                        <div className="flex min-w-0 items-center gap-1.5">
-                          <span className="truncate text-[13.5px] font-medium">{d.title}</span>
-                          {!d.required ? (
-                            <span className="text-ink-faint shrink-0 text-[10.5px]">선택</span>
-                          ) : null}
-                        </div>
-                      )}
-                      <div className="text-ink-faint flex items-center gap-1.5 text-[11px]">
-                        {d.categoryName ? <span>{d.categoryName}</span> : <span>직접 추가</span>}
-                        {d.checklist.length > 0 ? (
-                          <span>· 체크리스트 {d.checklist.length}</span>
-                        ) : null}
-                        {warn ? (
-                          <span
-                            className={cn(
-                              'rounded px-1.5 py-px text-[10.5px] font-semibold',
-                              warn === 'OUT_OF_RANGE'
-                                ? 'bg-danger-soft text-sun'
-                                : 'bg-warn-soft text-warn',
+            {groups.map((g) => (
+              <div key={g.baseKey} className="border-hairline border-b last:border-b-0">
+                {g.drafts.map((d) => {
+                  const isExtra = d.templateItemId === null;
+                  const isBase = d.key === d.baseKey;
+                  const warn = d.dueDate ? dateWarning(d.dueDate, period, closures) : null;
+                  return (
+                    <DraggableRow key={d.key} draft={d}>
+                      <div
+                        className={cn(
+                          'grid grid-cols-[18px_minmax(0,1fr)_108px_28px_28px] items-center gap-2 px-2 py-2 sm:grid-cols-[18px_minmax(0,1fr)_128px_28px_28px] sm:gap-2.5',
+                          !isBase && 'border-hairline border-t',
+                          d.dueDate === null && 'bg-warn-soft/40',
+                        )}
+                      >
+                        <span className="text-ink-ghost flex cursor-grab touch-none items-center justify-center active:cursor-grabbing">
+                          <GripVertical className="size-3.5" />
+                        </span>
+                        <div className="flex min-w-0 flex-col gap-0.5">
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            {d.session !== null ? (
+                              <span
+                                className="shrink-0 rounded px-1.5 py-px text-[10.5px] font-semibold"
+                                style={{ background: color.bg, color: color.text }}
+                              >
+                                {d.session}회차
+                              </span>
+                            ) : null}
+                            {isExtra && isBase ? (
+                              <input
+                                value={d.title}
+                                onChange={(e) => s.updateExtra(d.key, { title: e.target.value })}
+                                placeholder="할 일 이름"
+                                maxLength={100}
+                                autoFocus={d.title === ''}
+                                className="border-line bg-surface focus:border-ring h-7 min-w-0 flex-1 rounded-md border px-2 text-[13px] outline-none"
+                              />
+                            ) : (
+                              <span className="truncate text-[13.5px] font-medium">{d.title}</span>
                             )}
-                          >
-                            {WARNING_LABEL[warn]}
-                          </span>
-                        ) : null}
+                            {!d.required && d.session === null ? (
+                              <span className="text-ink-faint shrink-0 text-[10.5px]">선택</span>
+                            ) : null}
+                          </div>
+                          <div className="text-ink-faint flex items-center gap-1.5 text-[11px]">
+                            {d.categoryName ? (
+                              <span>{d.categoryName}</span>
+                            ) : (
+                              <span>직접 추가</span>
+                            )}
+                            {d.checklist.length > 0 ? (
+                              <span>· 체크리스트 {d.checklist.length}</span>
+                            ) : null}
+                            {warn ? (
+                              <span
+                                className={cn(
+                                  'rounded px-1.5 py-px text-[10.5px] font-semibold',
+                                  warn === 'OUT_OF_RANGE'
+                                    ? 'bg-danger-soft text-sun'
+                                    : 'bg-warn-soft text-warn',
+                                )}
+                              >
+                                {WARNING_LABEL[warn]}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                        <DateField
+                          value={d.dueDate ?? ''}
+                          onChange={(date) => s.place(d.key, date)}
+                          placeholder="날짜 선택"
+                          size="sm"
+                          format="short"
+                          defaultMonth={startDate}
+                          className={cn('w-full', d.dueDate === null && 'border-warn/50')}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => addSession(d)}
+                          aria-label="회차 추가"
+                          title="이 할 일의 회차를 하나 더 추가합니다"
+                          className="text-ink-ghost hover:bg-app hover:text-brand flex size-7 items-center justify-center rounded"
+                        >
+                          <CopyPlus className="size-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            !isBase
+                              ? s.removeOccurrence(d.key)
+                              : isExtra
+                                ? s.removeExtra(d.key)
+                                : s.remove(d.key)
+                          }
+                          aria-label={isBase ? '제외' : '회차 삭제'}
+                          className="text-ink-ghost hover:bg-app hover:text-ink flex size-7 items-center justify-center rounded"
+                        >
+                          <X className="size-3.5" />
+                        </button>
                       </div>
-                    </div>
-                    <DateField
-                      value={d.dueDate ?? ''}
-                      onChange={(date) => s.place(d.key, date)}
-                      placeholder="날짜 선택"
-                      size="sm"
-                      format="short"
-                      defaultMonth={startDate}
-                      className={cn('w-full', d.dueDate === null && 'border-warn/50')}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => (isExtra ? s.removeExtra(d.key) : s.remove(d.key))}
-                      aria-label="제외"
-                      className="text-ink-ghost hover:bg-app hover:text-ink flex size-7 items-center justify-center rounded"
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  </div>
-                </DraggableRow>
-              );
-            })}
+                    </DraggableRow>
+                  );
+                })}
+              </div>
+            ))}
             {drafts.length === 0 ? (
               <p className="text-ink-faint px-3 py-4 text-[12.5px]">배치할 할 일이 없습니다.</p>
             ) : null}
@@ -304,7 +401,6 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
               closureNames={closureNames}
               byDate={byDate}
               color={color}
-              onUnplace={s.unplace}
             />
           ))}
         </div>
@@ -312,10 +408,11 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
       <DragOverlay dropAnimation={null}>
         {active ? (
           <div
-            className="rounded-md px-2 py-1 text-xs font-medium shadow-lg"
+            className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium shadow-lg"
             style={{ background: color.bg, color: color.text }}
           >
-            {active.title || '할 일'}
+            {draftTitle(active) || '할 일'}
+            {addsSession ? <span className="text-[10.5px] opacity-70">회차 추가</span> : null}
           </div>
         ) : null}
       </DragOverlay>
@@ -324,7 +421,9 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
 }
 
 function DraggableRow({ draft, children }: { draft: TaskDraft; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: draft.key });
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `${ROW}${draft.key}`,
+  });
   return (
     <div
       ref={setNodeRef}
@@ -343,14 +442,12 @@ function MiniMonth({
   closureNames,
   byDate,
   color,
-  onUnplace,
 }: {
   monthStart: ISODate;
   period: { startDate: ISODate; endDate: ISODate };
   closureNames: Map<ISODate, string>;
   byDate: Map<ISODate, TaskDraft[]>;
   color: { solid: string; bg: string; text: string; border: string };
-  onUnplace: (key: string) => void;
 }) {
   const weeks = monthGrid(monthStart);
   const [y, m] = monthStart.split('-').map(Number);
@@ -379,7 +476,6 @@ function MiniMonth({
               closure={closureNames.get(date)}
               tasks={byDate.get(date) ?? []}
               color={color}
-              onUnplace={onUnplace}
             />
           ))}
         </div>
@@ -395,7 +491,6 @@ function MiniDay({
   closure,
   tasks,
   color,
-  onUnplace,
 }: {
   date: ISODate;
   inMonth: boolean;
@@ -403,7 +498,6 @@ function MiniDay({
   closure?: string;
   tasks: TaskDraft[];
   color: { solid: string; bg: string; text: string; border: string };
-  onUnplace: (key: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: date, disabled: !inMonth });
   const w = weekdayISO(date);
@@ -438,19 +532,42 @@ function MiniDay({
         {closure && inMonth ? <span className="text-sun/80 truncate">{closure}</span> : null}
       </div>
       {inMonth
-        ? tasks.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => onUnplace(t.key)}
-              title={`${t.title} · ${formatShort(date)} (${WEEKDAY_LABEL[w]}) · 클릭하면 배치 해제`}
-              className="truncate rounded px-1 py-px text-left text-[10.5px] font-medium hover:opacity-70"
-              style={{ background: color.bg, color: color.text }}
-            >
-              {t.title || '할 일'}
-            </button>
-          ))
+        ? tasks.map((t) => <MiniChip key={t.key} draft={t} date={date} color={color} />)
         : null}
     </div>
+  );
+}
+
+/** A placed draft on the mini calendar. Dragging moves it; the wizard list adds 회차 instead. */
+function MiniChip({
+  draft,
+  date,
+  color,
+}: {
+  draft: TaskDraft;
+  date: ISODate;
+  color: { solid: string; bg: string; text: string; border: string };
+}) {
+  const unplace = useWizardStore((s) => s.unplace);
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `${CHIP}${draft.key}`,
+  });
+  const w = weekdayISO(date);
+  return (
+    <button
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      type="button"
+      onClick={() => unplace(draft.key)}
+      title={`${draftTitle(draft)} · ${formatShort(date)} (${WEEKDAY_LABEL[w]}) · 끌어서 날짜 변경, 클릭하면 배치 해제`}
+      className={cn(
+        'cursor-grab touch-none truncate rounded px-1 py-px text-left text-[10.5px] font-medium hover:opacity-70 active:cursor-grabbing',
+        isDragging && 'opacity-40',
+      )}
+      style={{ background: color.bg, color: color.text }}
+    >
+      {draftTitle(draft) || '할 일'}
+    </button>
   );
 }

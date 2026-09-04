@@ -35,12 +35,15 @@ Gotchas learned:
 
 ## Domain rules that are decided (do not re-propose)
 
-- A program template is just an **ordered list of action items** (plus required flag and optional checklist override). There are **no phases (준비/진행/정리), no anchors, no offsets, no example dates, no sessions (회차), and no session rules**. All of those were removed on 2026-09-03 by the user; do not reintroduce them.
+- A program template is just an **ordered list of action items** (plus required flag and optional checklist override). There are **no phases (준비/진행/정리), no anchors, no offsets, no example dates, and no session rules**. All of those were removed on 2026-09-03 by the user; do not reintroduce them.
 - Scheduling is manual: in the registration wizard step 3 the user places each template task on a date (date picker or drag onto the period calendar). Nothing is auto-placed; "남은 항목 균등 배치" is an optional button the user presses. Weekend/closure/out-of-range dates are only warned about (`src/lib/services/placement.ts` `dateWarning`), never moved.
+- **회차 exist only inside wizard step 3**, added on 2026-09-04. A task can occur several times in one program: press 회차 추가 on its row, or drag an already-dated row onto another day. Templates still carry no 회차 count and the DB has no session column. `buildWizardDrafts` clones the base draft per occurrence, numbers the group 1..n **by date** (unplaced last), and approval bakes the number into the title (`수업 진행 2회차`). A task placed once stays unnumbered. Store keys: `item:3` / `adhoc:<uuid>` for the base, `<baseKey>#<uuid>` for each extra 회차, tracked in `wizardStore.occurrences`.
 - There is no overdue (지연) concept in the UI for now. The right panel shows 오늘, 이번 주, 프로그램 현황 (done/total).
 - Approval snapshots the template into `programs.template_snapshot` and stores the tasks exactly as placed; editing a template never changes registered programs.
 - Dates are `'YYYY-MM-DD'` strings end to end (`src/lib/utils/dates.ts`); "today" is Asia/Seoul via `todayInSeoul()`.
-- No login in the MVP. Do not store 어르신 personal data.
+- No login in the MVP. Do not store 어르신 personal data. The single staff user is `DEFAULT_ASSIGNEE` in `src/lib/domain/defaults.ts` (노성희); it prefills the wizard 담당자 field, the seed templates and the placeholders.
+- The wizard draft persists in localStorage (`heeday.wizard.v2`, `src/stores/wizardStore.ts`) **on purpose**: leaving to the calendar and coming back resumes the same draft at the same step. 새로 시작 clears it, 초안으로 저장 leaves and keeps it. Do not "fix" this into a reset-on-entry flow.
+- Switching to a **different** template in step 1 clears the task side (placements, 회차, exclusions, hand-added 할 일) and takes the new template's color, but keeps 기간 and 담당자 because those describe the program, not the template. 일정 이름 follows the new template unless the user typed their own (compared against `nameSuggestion`). `StepTemplate` confirms first via `draftWorkCount` and then reports both halves in a toast; never make this switch silent.
 - Enum codes in DB are ASCII (`PREP/RUN/WRAP`, `START/END/EACH_SESSION/SESSION_N`, …); Korean labels live in `src/lib/domain/labels.ts`. Categories are rows, not enums.
 
 ## Design artboards (`design/*.dc.html`)
@@ -56,7 +59,7 @@ These are Claude Design canvas artboards, not standalone pages. Each is a fixed 
 | `Template.dc.html` | 프로그램 양식 편집 | Mockup shows 기준점/오프셋/예시 날짜 columns; the product has a plain ordered list |
 | `Library.dc.html` | 할 일 목록 관리 | List + detail with checklist editor |
 
-The mockups predate the simplification: sessions, phases, anchors, offsets and overdue shown there do not exist in the product.
+The mockups predate the simplification: phases, anchors, offsets and overdue shown there do not exist in the product, and their 회차 are scheduled entities rather than the per-task occurrences the wizard now has.
 
 Month view right panel sections: **오늘**, **이번 주** (upcoming undone tasks), **프로그램 현황** (done/total per program).
 

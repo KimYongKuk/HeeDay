@@ -6,8 +6,15 @@
 import { config } from 'dotenv';
 import { eq, sql } from 'drizzle-orm';
 import { getDb, getPool } from '@/lib/db/client';
-import { actionItems, categories, closureDays, programTemplates, templateItems } from '@/lib/db/schema';
+import {
+  actionItems,
+  categories,
+  closureDays,
+  programTemplates,
+  templateItems,
+} from '@/lib/db/schema';
 import type { TagColorKey } from '@/lib/domain/colors';
+import { DEFAULT_ASSIGNEE } from '@/lib/domain/defaults';
 import type { ColorKey } from '@/lib/domain/enums';
 import { KR_HOLIDAY_SEED } from '@/lib/services/holidays';
 
@@ -35,7 +42,11 @@ const ACTION_ITEMS: ActionItemSeed[] = [
   { name: '예산 신청', category: '기획', checklist: ['품의서 작성'] },
   { name: '사업계획서 제출', category: '기획', checklist: ['계획서 작성', '결재', '군청 제출'] },
   { name: '중간 점검 회의', category: '기획' },
-  { name: '강사 섭외 · 계약', category: '행정', checklist: ['후보 연락', '이력서 수령', '계약서 작성', '계약서 서명'] },
+  {
+    name: '강사 섭외 · 계약',
+    category: '행정',
+    checklist: ['후보 연락', '이력서 수령', '계약서 작성', '계약서 서명'],
+  },
   { name: '강사 계약서 회수', category: '행정' },
   { name: '공문 발송', category: '행정' },
   { name: '강사 최종 확인', category: '행정' },
@@ -45,8 +56,15 @@ const ACTION_ITEMS: ActionItemSeed[] = [
   {
     name: '준비물 점검',
     category: '운영',
-    description: '회차 전날 강의실과 준비물을 확인합니다. 체크리스트는 양식별로 조정할 수 있습니다.',
-    checklist: ['출석부 · 명찰', '강의자료 출력', '다과 · 생수', '음향 · 빔프로젝터 확인', '강사 도착 시간 재확인'],
+    description:
+      '회차 전날 강의실과 준비물을 확인합니다. 체크리스트는 양식별로 조정할 수 있습니다.',
+    checklist: [
+      '출석부 · 명찰',
+      '강의자료 출력',
+      '다과 · 생수',
+      '음향 · 빔프로젝터 확인',
+      '강사 도착 시간 재확인',
+    ],
   },
   { name: '출석부 정리', category: '운영' },
   { name: '사진 정리', category: '운영' },
@@ -77,7 +95,7 @@ const TEMPLATES: TemplateSeed[] = [
     name: '웰다잉 프로그램',
     color: 'rose',
     description: '삶의 마무리를 준비하는 6회기 교육 프로그램',
-    defaultAssignee: '김○○',
+    defaultAssignee: DEFAULT_ASSIGNEE,
     items: [
       { item: '기획서 작성' },
       { item: '예산 신청' },
@@ -96,7 +114,7 @@ const TEMPLATES: TemplateSeed[] = [
     name: '스마트폰 활용교실',
     color: 'amber',
     description: '어르신 대상 스마트폰 기초 활용 교육',
-    defaultAssignee: '이○○',
+    defaultAssignee: DEFAULT_ASSIGNEE,
     items: [
       { item: '강사 섭외 · 계약' },
       { item: '참여자 모집 홍보' },
@@ -111,7 +129,7 @@ const TEMPLATES: TemplateSeed[] = [
     name: '실버 건강체조',
     color: 'green',
     description: '상시 운영 건강체조',
-    defaultAssignee: '박○○',
+    defaultAssignee: DEFAULT_ASSIGNEE,
     items: [
       { item: '강사 섭외 · 계약' },
       { item: '준비물 점검' },
@@ -122,7 +140,7 @@ const TEMPLATES: TemplateSeed[] = [
   {
     name: '노인일자리 사업',
     color: 'blue',
-    defaultAssignee: '김○○',
+    defaultAssignee: DEFAULT_ASSIGNEE,
     items: [
       { item: '사업계획서 제출' },
       { item: '모집 공고 게시' },
@@ -162,12 +180,17 @@ async function seedCategories() {
   const db = getDb();
   const idByName = new Map<string, number>();
   for (const [index, c] of CATEGORIES.entries()) {
-    const existing = await db.query.categories.findFirst({ where: eq(categories.name, c.name), columns: { id: true } });
+    const existing = await db.query.categories.findFirst({
+      where: eq(categories.name, c.name),
+      columns: { id: true },
+    });
     if (existing) {
       idByName.set(c.name, existing.id);
       continue;
     }
-    const [res] = await db.insert(categories).values({ name: c.name, color: c.color, sortOrder: index + 1 });
+    const [res] = await db
+      .insert(categories)
+      .values({ name: c.name, color: c.color, sortOrder: index + 1 });
     idByName.set(c.name, res.insertId);
   }
   return idByName;
@@ -243,7 +266,9 @@ async function seedClosures() {
   const db = getDb();
   await db
     .insert(closureDays)
-    .values(KR_HOLIDAY_SEED.map((h) => ({ date: h.date, name: h.name, kind: h.kind, source: 'seed' })))
+    .values(
+      KR_HOLIDAY_SEED.map((h) => ({ date: h.date, name: h.name, kind: h.kind, source: 'seed' })),
+    )
     .onDuplicateKeyUpdate({ set: { name: sql`values(name)`, kind: sql`values(kind)` } });
 }
 

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { ApiClientError } from '@/lib/api/client';
 import { useApproveProgram } from '@/lib/api/queries';
 import { programFormSchema, type PlacedTaskInput } from '@/lib/domain/zod';
-import { draftsFromSnapshot } from '@/lib/services/placement';
+import { buildWizardDrafts, draftTitle } from '@/lib/services/placement';
 import { useWizardStore } from '@/stores/wizardStore';
 import { cn } from '@/lib/utils';
 
@@ -61,10 +61,14 @@ export function WizardScreen() {
     if (!parsed.success)
       return toast.error(parsed.error.issues[0]?.message ?? '입력값을 확인하세요.');
 
-    const fromTemplate = draftsFromSnapshot(s.snapshot).filter((d) => !s.removed.includes(d.key));
-    const unplaced =
-      fromTemplate.filter((d) => !s.placements[d.key]).length +
-      s.extras.filter((e) => !s.placements[e.key]).length;
+    const drafts = buildWizardDrafts({
+      snapshot: s.snapshot,
+      removed: s.removed,
+      extras: s.extras,
+      occurrences: s.occurrences,
+      placements: s.placements,
+    });
+    const unplaced = drafts.filter((d) => d.dueDate === null).length;
     if (unplaced > 0)
       return toast.error(
         `날짜가 없는 할 일이 ${unplaced}개 있습니다. 날짜를 지정하거나 제외하세요.`,
@@ -72,22 +76,14 @@ export function WizardScreen() {
     if (s.extras.some((e) => e.title.trim() === ''))
       return toast.error('추가한 할 일의 이름을 입력하세요.');
 
-    const tasks: PlacedTaskInput[] = [
-      ...fromTemplate.map((d) => ({
-        templateItemId: d.templateItemId,
-        title: d.title,
-        dueDate: s.placements[d.key],
-        required: d.required,
-        checklist: d.checklist,
-      })),
-      ...s.extras.map((e) => ({
-        templateItemId: null,
-        title: e.title.trim(),
-        dueDate: s.placements[e.key],
-        required: true,
-        checklist: e.checklist,
-      })),
-    ];
+    // 회차가 둘 이상이면 제목에 회차 번호가 붙습니다 (`수업 진행 1회차`).
+    const tasks: PlacedTaskInput[] = drafts.map((d) => ({
+      templateItemId: d.templateItemId,
+      title: draftTitle({ title: d.title.trim(), session: d.session }),
+      dueDate: d.dueDate as string,
+      required: d.required,
+      checklist: d.checklist,
+    }));
 
     try {
       const result = await approve.mutateAsync({

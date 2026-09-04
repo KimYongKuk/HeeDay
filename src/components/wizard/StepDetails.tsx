@@ -4,6 +4,7 @@ import { ColorSwatches } from '@/components/common/ColorSwatches';
 import { DateField } from '@/components/common/DateField';
 import { Input } from '@/components/ui/input';
 import { PALETTE } from '@/lib/domain/colors';
+import { DEFAULT_ASSIGNEE } from '@/lib/domain/defaults';
 import { useWizardStore } from '@/stores/wizardStore';
 import { diffDaysISO } from '@/lib/utils/dates';
 
@@ -72,7 +73,7 @@ export function StepDetails() {
             <Input
               value={form.assignee}
               onChange={(e) => s.patchForm({ assignee: e.target.value })}
-              placeholder="예: 김○○"
+              placeholder={DEFAULT_ASSIGNEE}
               className="bg-surface h-9"
             />
           </label>
