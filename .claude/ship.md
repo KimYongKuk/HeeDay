@@ -22,4 +22,5 @@
 - **배포 1회 = 15 크레딧 (월 300).** 승인 게이트에서 잔량과 함께 상기시킨다.
 - 스키마 변경 시 push 전에 로컬에서 운영 DB 를 가리키고 마이그레이션 먼저: `DATABASE_URL="mysql://…" DATABASE_SSL=1 pnpm db:migrate`
 - 운영 DB 는 TiDB Serverless. MySQL 표준 SQL 만 (RETURNING·MariaDB 전용 문법 금지, CLAUDE.md 참조).
+- **운영 DB 비밀번호를 재발급하지 않는다.** TiDB Cloud 콘솔은 기존 비밀번호를 가려서 보여주므로 Reset 을 누르기 쉬운데, 그 순간 Netlify env 가 무효가 되어 사이트가 통째로 500 이 된다(2026-09-14 30분 장애). 접속값이 필요하면 Netlify env 의 `DATABASE_URL` 을 복사한다(Claude 는 커넥터 `manage-env-vars` 로 읽을 수 있고, 쓰기는 차단됨). 바꿨다면 env 갱신 + 재배포(15 크레딧)를 한 세트로.
 - Deploy Previews / Branch deploys 는 켜지 않는다. 켜면 배포마다 15 크레딧이 추가로 나간다.
