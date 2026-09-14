@@ -1,0 +1,355 @@
+<title>HeeDay Keepalive</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f4f3f0;
+    --surface: #ffffff;
+    --line: #e7e5e0;
+    --ink: #1b1a18;
+    --ink-muted: #6b6963;
+    --ink-faint: #8b8983;
+    --brand: #4b5bd6;
+    --brand-soft: rgba(75, 91, 214, 0.10);
+    --db: #1f8a5b;
+    --db-soft: rgba(79, 170, 114, 0.16);
+    --sched: #b3720c;
+    --sched-soft: rgba(226, 165, 58, 0.18);
+    --ui: #6b6963;
+    --ui-soft: rgba(107, 105, 99, 0.10);
+    --warn: #a12c42;
+    --warn-soft: rgba(226, 107, 130, 0.14);
+    --code-bg: #eeede9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17171a; --surface: #202024; --line: #33333a;
+      --ink: #ecebe7; --ink-muted: #a4a29b; --ink-faint: #7c7a74;
+      --brand: #8a97f0; --brand-soft: rgba(138, 151, 240, 0.16);
+      --db: #5fc48b; --db-soft: rgba(95, 196, 139, 0.16);
+      --sched: #e2a53a; --sched-soft: rgba(226, 165, 58, 0.16);
+      --ui: #a4a29b; --ui-soft: rgba(164, 162, 155, 0.12);
+      --warn: #f08ea0; --warn-soft: rgba(240, 142, 160, 0.14);
+      --code-bg: #2a2a30;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17171a; --surface: #202024; --line: #33333a;
+    --ink: #ecebe7; --ink-muted: #a4a29b; --ink-faint: #7c7a74;
+    --brand: #8a97f0; --brand-soft: rgba(138, 151, 240, 0.16);
+    --db: #5fc48b; --db-soft: rgba(95, 196, 139, 0.16);
+    --sched: #e2a53a; --sched-soft: rgba(226, 165, 58, 0.16);
+    --ui: #a4a29b; --ui-soft: rgba(164, 162, 155, 0.12);
+    --warn: #f08ea0; --warn-soft: rgba(240, 142, 160, 0.14);
+    --code-bg: #2a2a30;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", -apple-system, "Apple SD Gothic Neo", sans-serif;
+    font-feature-settings: "tnum";
+    font-size: 15px;
+    line-height: 1.6;
+    padding-inline: 20px;
+    padding-block: 40px 64px;
+  }
+  .page { max-width: 960px; margin: 0 auto; display: grid; gap: 40px; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; line-height: 1.25; }
+  h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+  p { margin: 0; }
+  code, .mono {
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .eyebrow {
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .meta { color: var(--ink-muted); font-size: 13.5px; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  section { display: grid; gap: 16px; }
+  section > header { display: grid; gap: 4px; }
+
+  /* 1. 한 문장 */
+  .thesis {
+    font-size: 21px; font-weight: 500; line-height: 1.5; max-width: 34em;
+    border-left: 3px solid var(--brand); padding-left: 18px;
+  }
+  .thesis small { display: block; font-size: 15px; font-weight: 400; color: var(--ink-muted); margin-top: 8px; }
+
+  /* 2. 범위 */
+  .scope { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .scope-item {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px 16px; display: grid; gap: 6px; align-content: start;
+  }
+  .scope-item .path { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; font-size: 13px; word-break: break-all; }
+  .scope-item .what { color: var(--ink-muted); font-size: 13.5px; }
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    padding: 2px 7px; border-radius: 4px; width: max-content;
+  }
+  .tag.add { background: var(--db-soft); color: var(--db); }
+  .tag.mod { background: var(--brand-soft); color: var(--brand); }
+  .out-of-scope { color: var(--ink-muted); font-size: 13.5px; }
+
+  /* 3. 흐름 */
+  figure { margin: 0; display: grid; gap: 10px; }
+  .diagram-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .diagram-wrap svg { display: block; min-width: 640px; max-width: 100%; height: auto; }
+  figcaption { color: var(--ink-muted); font-size: 13.5px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-muted); }
+  .legend span::before {
+    content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+    margin-right: 6px; vertical-align: -1px; border: 1px solid var(--swatch-line);
+    background: var(--swatch);
+  }
+
+  .timing { display: grid; gap: 8px; }
+  .timing-row { display: grid; grid-template-columns: 11em 1fr; gap: 12px; align-items: center; font-size: 13.5px; }
+  .timing-row .label { color: var(--ink-muted); }
+  .bar { display: flex; height: 22px; border-radius: 4px; overflow: hidden; background: var(--ui-soft); }
+  .bar > span { display: flex; align-items: center; padding-inline: 8px; font-size: 12px; white-space: nowrap; overflow: hidden; color: var(--ink); }
+  .bar .fn { background: var(--brand-soft); border-right: 1px solid var(--brand); }
+  .bar .db { background: var(--db-soft); border-right: 1px solid var(--db); }
+  .bar .net { background: var(--ui-soft); }
+  .timing .scale { color: var(--ink-faint); font-size: 12px; }
+
+  /* 4. 주의할 점 */
+  .cost { width: 100%; border-collapse: collapse; font-size: 13.5px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .cost th, .cost td { padding: 9px 12px; text-align: left; border-top: 1px solid var(--line); vertical-align: top; }
+  .cost thead th { border-top: 0; font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); font-weight: 700; }
+  .cost td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cost tr.hot td { background: var(--warn-soft); }
+  .cost tr.hot td:first-child { color: var(--warn); font-weight: 700; }
+  .cost tfoot td { font-weight: 700; }
+  .table-wrap { overflow-x: auto; }
+
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .note { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+  .note h3 { font-size: 14.5px; font-weight: 700; }
+  .note p { font-size: 13.5px; color: var(--ink-muted); }
+  .note.risk { border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
+  .note.risk h3 { color: var(--warn); }
+
+  .status { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 13px; color: var(--ink-muted); padding-top: 14px; border-top: 1px solid var(--line); }
+  .status b { color: var(--ink); font-weight: 500; }
+  .ok::before { content: "●"; color: var(--db); margin-right: 6px; }
+  .todo::before { content: "○"; color: var(--ink-faint); margin-right: 6px; }
+
+  @media (max-width: 480px) {
+    h1 { font-size: 24px; }
+    .thesis { font-size: 18px; }
+    .timing-row { grid-template-columns: 1fr; gap: 4px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .scope-item, .note { transition: border-color 160ms ease; }
+  }
+</style>
+
+<div class="page">
+
+  <header style="display:grid; gap:10px">
+    <div class="eyebrow">HeeDay · 운영 · 2026-09-14</div>
+    <h1>운영 서버를 근무시간에 깨워 두는 keepalive 함수</h1>
+    <div class="meta">
+      <span>대상: heeday.netlify.app (Netlify Free) + TiDB Serverless</span>
+      <span>상태: 코드 완료 · 배포 대기</span>
+      <span>상세: <code>docs/history/2026-09-14_netlify-keepalive-함수.md</code></span>
+    </div>
+  </header>
+
+  <section>
+    <header><div class="eyebrow">한 문장</div></header>
+    <p class="thesis">
+      평일 07–19시에 15분마다 서버를 한 번씩 건드려서, 아침 첫 접속이 6초가 아니라 1초 안에 뜨게 했다.
+      <small>점검 과정에서 이 사이트의 진짜 비용은 트래픽이 아니라 <b>배포 횟수</b>라는 것도 확인했다 (배포 1회 = 월 예산의 5%).</small>
+    </p>
+  </section>
+
+  <section>
+    <header>
+      <div class="eyebrow">범위</div>
+      <h2 style="font-size:17px">이번에 바뀐 것</h2>
+    </header>
+    <div class="scope">
+      <div class="scope-item">
+        <span class="tag add">추가</span>
+        <div class="path">netlify/functions/keepalive.mts</div>
+        <div class="what">Netlify Scheduled Function. 15분마다 <code>/api/health</code> 를 호출하고 결과를 한 줄 JSON 으로 로그에 남긴다. 주말은 즉시 종료.</div>
+      </div>
+      <div class="scope-item">
+        <span class="tag add">추가</span>
+        <div class="path">.claude/ship.md</div>
+        <div class="what">배포 절차. push → Netlify 자동 배포, health 확인, 롤백, 그리고 <b>크레딧 잔량 확인</b>을 사전 조건으로.</div>
+      </div>
+      <div class="scope-item">
+        <span class="tag add">추가</span>
+        <div class="path">.claude/verify.md</div>
+        <div class="what">검증 명령 4개 (test · lint · typecheck · build). smoke 와 DB 명령은 제외.</div>
+      </div>
+      <div class="scope-item">
+        <span class="tag mod">수정</span>
+        <div class="path">README.md</div>
+        <div class="what">배포 절에 keepalive 항목 한 줄.</div>
+      </div>
+      <div class="scope-item">
+        <span class="tag add">추가</span>
+        <div class="path">CHANGELOG.md · docs/history/</div>
+        <div class="what">이 저장소의 첫 작업 기록. 이 페이지도 그 일부.</div>
+      </div>
+    </div>
+    <p class="out-of-scope">범위 밖: 앱 화면·API·DB 스키마는 손대지 않았다. <code>/api/health</code> 는 이미 있던 엔드포인트를 그대로 쓴다. 아직 배포하지 않았다 (다른 변경과 묶어서).</p>
+  </section>
+
+  <section>
+    <header>
+      <div class="eyebrow">흐름</div>
+      <h2 style="font-size:17px">핑이 지나가는 길 — 직원 요청과 같은 경로</h2>
+    </header>
+    <figure>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 920 330" role="img" aria-label="Netlify 스케줄러가 15분마다 keepalive.mts 를 실행하고, 이 함수가 /api/health 를 HTTPS 로 호출해 Next.js 서버 핸들러와 TiDB 를 차례로 깨운다. 직원 브라우저의 일반 요청도 같은 핸들러와 DB 를 지난다.">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+            <marker id="arr-brand" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--brand)"/>
+            </marker>
+          </defs>
+          <g fill="currentColor" font-family="Pretendard Variable, Pretendard, Noto Sans KR, sans-serif" font-size="12">
+
+            <!-- 외부: 스케줄러 -->
+            <rect x="20" y="60" width="180" height="78" rx="8" fill="var(--sched-soft)" stroke="var(--sched)" stroke-width="1.2"/>
+            <text x="110" y="84" text-anchor="middle" font-weight="700" font-size="13">Netlify Scheduler</text>
+            <text x="110" y="103" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace">*/15 22-23,0-10 * * *</text>
+            <text x="110" y="121" text-anchor="middle" font-size="11" fill="var(--ink-muted)">UTC = KST 07:00–19:59</text>
+
+            <!-- 서버: keepalive.mts -->
+            <rect x="260" y="50" width="200" height="98" rx="8" fill="var(--brand-soft)" stroke="var(--brand)" stroke-width="1.6"/>
+            <text x="360" y="74" text-anchor="middle" font-weight="700" font-size="13">keepalive.mts</text>
+            <text x="360" y="93" text-anchor="middle" font-size="11" fill="var(--ink-muted)">netlify/functions/</text>
+            <text x="360" y="114" text-anchor="middle" font-size="11">KST 주말이면 → 즉시 종료</text>
+            <text x="360" y="132" text-anchor="middle" font-size="11">아니면 → GET /api/health</text>
+
+            <!-- 서버: route.ts -->
+            <rect x="540" y="50" width="200" height="98" rx="8" fill="var(--brand-soft)" stroke="var(--brand)" stroke-width="1.2"/>
+            <text x="640" y="74" text-anchor="middle" font-weight="700" font-size="13">Next.js 서버 핸들러</text>
+            <text x="640" y="93" text-anchor="middle" font-size="11" fill="var(--ink-muted)">src/app/api/health/route.ts</text>
+            <text x="640" y="114" text-anchor="middle" font-size="11">force-dynamic · 캐시 없음</text>
+            <text x="640" y="132" text-anchor="middle" font-size="11">콜드 스타트 2–3초</text>
+
+            <!-- 저장소: TiDB -->
+            <rect x="790" y="50" width="110" height="98" rx="8" fill="var(--db-soft)" stroke="var(--db)" stroke-width="1.2"/>
+            <text x="845" y="80" text-anchor="middle" font-weight="700" font-size="13">TiDB</text>
+            <text x="845" y="98" text-anchor="middle" font-size="11" fill="var(--ink-muted)">Serverless</text>
+            <text x="845" y="120" text-anchor="middle" font-size="11">유휴 시 축소</text>
+            <text x="845" y="136" text-anchor="middle" font-size="11">깨우는 데 1.9초</text>
+
+            <!-- 로그 -->
+            <rect x="260" y="190" width="200" height="52" rx="8" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="360" y="212" text-anchor="middle" font-size="12" font-weight="500">Netlify → Logs → Functions</text>
+            <text x="360" y="230" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace">{status, totalMs, dbMs}</text>
+
+            <!-- UI: 직원 브라우저 -->
+            <rect x="20" y="250" width="180" height="56" rx="8" fill="var(--ui-soft)" stroke="var(--ui)" stroke-width="1.2"/>
+            <text x="110" y="274" text-anchor="middle" font-weight="700" font-size="13">직원 브라우저</text>
+            <text x="110" y="292" text-anchor="middle" font-size="11" fill="var(--ink-muted)">/calendar 등 일반 요청</text>
+
+            <!-- 화살표: 새 경로 (brand) -->
+            <g stroke="var(--brand)" stroke-width="1.8" fill="none">
+              <line x1="200" y1="99" x2="258" y2="99" marker-end="url(#arr-brand)"/>
+              <line x1="460" y1="99" x2="538" y2="99" marker-end="url(#arr-brand)"/>
+              <line x1="740" y1="99" x2="788" y2="99" marker-end="url(#arr-brand)"/>
+              <line x1="360" y1="148" x2="360" y2="188" marker-end="url(#arr-brand)"/>
+            </g>
+            <text x="229" y="90" text-anchor="middle" font-size="11" fill="var(--brand)">15분마다</text>
+            <text x="499" y="90" text-anchor="middle" font-size="11" fill="var(--brand)">HTTPS GET</text>
+            <text x="764" y="90" text-anchor="middle" font-size="11" fill="var(--brand)">select 1</text>
+            <text x="376" y="172" font-size="11" fill="var(--brand)">한 줄 JSON</text>
+
+            <!-- 화살표: 기존 경로 (currentColor) -->
+            <g stroke="currentColor" stroke-width="1.2" fill="none">
+              <path d="M200,278 L600,278 L600,150" marker-end="url(#arr)"/>
+              <path d="M640,150 L640,280 L845,280 L845,150" marker-end="url(#arr)"/>
+            </g>
+            <text x="400" y="270" text-anchor="middle" font-size="11" fill="var(--ink-muted)">같은 핸들러를 지난다 (달력·프로그램 API)</text>
+            <text x="742" y="298" text-anchor="middle" font-size="11" fill="var(--ink-muted)">같은 DB 를 지난다</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption>핑은 직원 요청과 같은 핸들러·같은 DB 를 지나므로, 15분마다 한 번이면 둘 다 깨어 있는 상태로 유지된다. 파란 선이 이번에 새로 생긴 경로.</figcaption>
+      <div class="legend">
+        <span style="--swatch: var(--sched-soft); --swatch-line: var(--sched)">외부 · 스케줄러</span>
+        <span style="--swatch: var(--brand-soft); --swatch-line: var(--brand)">서버 · Netlify 함수</span>
+        <span style="--swatch: var(--db-soft); --swatch-line: var(--db)">저장소 · TiDB</span>
+        <span style="--swatch: var(--ui-soft); --swatch-line: var(--ui)">UI · 브라우저</span>
+      </div>
+    </figure>
+
+    <div class="timing">
+      <div class="timing-row">
+        <span class="label">유휴 후 첫 요청 (실측 5.9s)</span>
+        <div class="bar">
+          <span class="fn" style="width:42%">함수 콜드 스타트 ~2.5s</span>
+          <span class="db" style="width:32%">DB 깨우기 1.9s</span>
+          <span class="net" style="width:26%">왕복·처리 ~1.5s</span>
+        </div>
+      </div>
+      <div class="timing-row">
+        <span class="label">깨어 있을 때 (실측 0.9s)</span>
+        <div class="bar"><span class="net" style="width:15%">0.9s · DB 16ms</span></div>
+      </div>
+      <span class="scale">막대 전체 = 6초. 함수·DB 몫은 실측 총합에서 나눈 추정치, DB 1.9s 만 <code>/api/health</code> 의 <code>latencyMs</code> 로 직접 측정.</span>
+    </div>
+  </section>
+
+  <section>
+    <header>
+      <div class="eyebrow">주의할 점</div>
+      <h2 style="font-size:17px">돈이 드는 곳은 핑이 아니라 배포다</h2>
+    </header>
+    <div class="table-wrap">
+      <table class="cost">
+        <thead>
+          <tr><th>Netlify 크레딧 (월 300)</th><th class="num">9월 1–14일</th><th>단가 (Usage 화면 기준)</th></tr>
+        </thead>
+        <tbody>
+          <tr class="hot"><td>Production 배포</td><td class="num">7회 → 105</td><td><b>1회 = 15 크레딧</b> → 월 20회가 상한</td></tr>
+          <tr><td>Web requests</td><td class="num">6,584회 → 1.3</td><td>약 5,000회 = 1 크레딧</td></tr>
+          <tr><td>Compute · Bandwidth</td><td class="num">4.3 + 0.8</td><td>—</td></tr>
+          <tr><td>keepalive 예상</td><td class="num">월 ~2,300회 → &lt; 1</td><td>평일 13시간 × 4회 × 22일, health 호출 포함</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>합계</td><td class="num">111.5 / 300</td><td>남은 16일 동안 189 → 배포 12회 여유</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="notes">
+      <div class="note risk">
+        <h3>작은 커밋을 따로 push 하지 말 것</h3>
+        <p>push 한 번이 월 예산의 5%. 크레딧이 0 이 되면 리셋일까지 사이트가 정지된다. Deploy Previews · Branch deploys 도 같은 단가라 켜지 않는다.</p>
+      </div>
+      <div class="note risk">
+        <h3>8월 장애 원인은 아직 가설</h3>
+        <p>크레딧 고갈이 콜드 스타트보다 유력하지만 Usage 의 8월 기록을 아직 보지 않았다. 확인 전에 단정하지 않는다.</p>
+      </div>
+      <div class="note">
+        <h3>cron 은 UTC</h3>
+        <p><code>22-23,0-10</code> 이 KST 07–19시다. "왜 밤에 도냐"고 고치면 근무시간에 안 돈다. 주말은 cron 이 아니라 함수 첫 줄에서 KST 요일로 거른다 (UTC 창 한가운데 요일 경계가 있어서).</p>
+      </div>
+      <div class="note">
+        <h3>함수 웜 유지는 보장값이 아님</h3>
+        <p>15분 주기면 가끔 함수 콜드 스타트가 샌다. 로그의 <code>totalMs</code> 가 5초 넘게 튀면 그것. <code>dbMs</code> 가 커지면 TiDB 쪽. 잦으면 10분으로 좁힌다.</p>
+      </div>
+    </div>
+    <div class="status">
+      <span class="ok"><b>확인함</b> typecheck · eslint · build · 운영 URL 대상 로컬 실행 200/943ms · 주말 스킵</span>
+      <span class="todo"><b>배포 후 확인</b> Functions 에 Scheduled 표시 · 30분 뒤 로그 2회 · 다음 날 아침 첫 응답 1초 안팎</span>
+    </div>
+  </section>
+
+</div>

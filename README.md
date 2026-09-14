@@ -35,6 +35,7 @@ pnpm dev                        # http://localhost:3000
    ```
 3. **앱 배포.** GitHub 저장소를 Netlify 또는 Vercel에 연결합니다. 환경 변수 `DATABASE_URL`, `DATABASE_SSL=1`을 설정합니다. `netlify.toml`이 포함되어 있고 Vercel은 설정 없이 동작합니다.
 4. **확인.** `https://<도메인>/api/health` 가 `{"ok":true}`를 반환하면 DB 연결이 정상입니다.
+5. **깨워두기.** `netlify/functions/keepalive.mts`가 평일 KST 07–19시에 15분마다 `/api/health`를 호출해 서버 핸들러와 TiDB 콜드 스타트를 막습니다(Netlify Scheduled Function, production 배포에서만 동작). 결과는 Netlify → Logs → Functions → `keepalive`에 한 줄 JSON으로 남습니다.
 
 주의: 무료 서버리스 함수는 실행 시간이 짧습니다. 이 앱의 요청은 모두 밀리초 단위라 문제가 없지만, DB 커넥션 풀은 인스턴스당 3개로 제한되어 있습니다(`src/lib/db/client.ts`).
 
