@@ -10,10 +10,11 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import { CopyPlus, GripVertical, Plus, RotateCcw, Wand2, X } from 'lucide-react';
+import { CopyPlus, GripVertical, Plus, RotateCcw, Star, Wand2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DateField } from '@/components/common/DateField';
+import { RepeatPopover } from '@/components/wizard/RepeatPopover';
 import { useClosures } from '@/lib/api/queries';
 import { PALETTE } from '@/lib/domain/colors';
 import { WEEKDAY_LABEL } from '@/lib/domain/labels';
@@ -112,9 +113,10 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
             extras: s.extras,
             occurrences: s.occurrences,
             placements: s.placements,
+            important: s.important,
           })
         : [],
-    [s.snapshot, s.removed, s.extras, s.occurrences, s.placements],
+    [s.snapshot, s.removed, s.extras, s.occurrences, s.placements, s.important],
   );
 
   const placed = drafts.filter((d) => d.dueDate !== null).length;
@@ -234,13 +236,17 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
           </div>
           <p className="text-ink-faint -mt-1 text-xs leading-relaxed">
             각 할 일의 날짜를 선택하거나 오른쪽 달력으로 끌어다 놓습니다. 이미 날짜가 있는 할 일을
-            다시 끌어다 놓으면 회차가 추가됩니다. 필요 없는 항목은 제외할 수 있습니다.
+            다시 끌어다 놓으면 회차가 추가되고, 반복 버튼으로 매주·매달 회차를 한 번에 추가할 수
+            있습니다. 필요 없는 항목은 제외할 수 있습니다.
           </p>
 
           <div className="border-line bg-surface overflow-hidden rounded-xl border">
             {groups.map((g) => (
               <div key={g.baseKey} className="border-hairline border-b last:border-b-0">
                 {g.drafts.map((d) => {
+                  const taken = new Set(
+                    g.drafts.flatMap((x) => (x.dueDate ? [x.dueDate] : [])),
+                  );
                   const isExtra = d.templateItemId === null;
                   const isBase = d.key === d.baseKey;
                   const warn = d.dueDate ? dateWarning(d.dueDate, period, closures) : null;
@@ -248,7 +254,7 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
                     <DraggableRow key={d.key} draft={d}>
                       <div
                         className={cn(
-                          'grid grid-cols-[18px_minmax(0,1fr)_108px_28px_28px] items-center gap-2 px-2 py-2 sm:grid-cols-[18px_minmax(0,1fr)_128px_28px_28px] sm:gap-2.5',
+                          'grid grid-cols-[18px_minmax(0,1fr)_108px_28px_28px_28px] items-center gap-2 px-2 py-2 sm:grid-cols-[18px_minmax(0,1fr)_128px_28px_28px_28px] sm:gap-2.5',
                           !isBase && 'border-hairline border-t',
                           d.dueDate === null && 'bg-warn-soft/40',
                         )}
@@ -258,6 +264,24 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
                         </span>
                         <div className="flex min-w-0 flex-col gap-0.5">
                           <div className="flex min-w-0 items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => s.toggleImportant(d.key)}
+                              aria-label={d.important ? '중요 해제' : '중요 표시'}
+                              aria-pressed={d.important}
+                              title="중요한 업무로 표시합니다"
+                              className={cn(
+                                'flex size-5 shrink-0 items-center justify-center rounded',
+                                d.important
+                                  ? 'text-star'
+                                  : 'text-ink-ghost hover:text-star',
+                              )}
+                            >
+                              <Star
+                                className="size-3.5"
+                                fill={d.important ? 'currentColor' : 'none'}
+                              />
+                            </button>
                             {d.session !== null ? (
                               <span
                                 className="shrink-0 rounded px-1.5 py-px text-[10.5px] font-semibold"
@@ -314,6 +338,17 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
                           defaultMonth={startDate}
                           className={cn('w-full', d.dueDate === null && 'border-warn/50')}
                         />
+                        {d.dueDate ? (
+                          <RepeatPopover
+                            draft={d}
+                            seed={d.dueDate}
+                            taken={taken}
+                            period={period}
+                            closures={closures}
+                          />
+                        ) : (
+                          <span />
+                        )}
                         <button
                           type="button"
                           onClick={() => addSession(d)}

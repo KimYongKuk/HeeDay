@@ -32,6 +32,7 @@
   --color-holiday: #fdf7f6;
   --color-warn: #8a5a09;
   --color-warn-soft: #fbefd6;
+  --color-star: #d9970a;
 }
 
 @theme inline {

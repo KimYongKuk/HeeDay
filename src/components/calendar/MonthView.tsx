@@ -7,7 +7,7 @@ import { useElementSize } from '@/hooks/useElementSize';
 import { usePrinting } from '@/hooks/usePrinting';
 import type { CalendarTaskDto, ProgramListDto } from '@/lib/domain/dto';
 import type { ISODate } from '@/lib/domain/types';
-import { assignLanes, chipCapacity } from '@/lib/services/calendarLayout';
+import { assignLanes, chipCapacity, compareDayTasks } from '@/lib/services/calendarLayout';
 import { compareISO } from '@/lib/utils/dates';
 import { cn } from '@/lib/utils';
 
@@ -45,7 +45,7 @@ export function MonthView({
       map.set(t.dueDate, list);
     }
     for (const list of map.values())
-      list.sort((a, b) => Number(a.done) - Number(b.done) || a.id - b.id);
+      list.sort(compareDayTasks);
     return map;
   }, [tasks]);
 

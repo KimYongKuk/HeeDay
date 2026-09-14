@@ -1,14 +1,17 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Archive, ArchiveRestore, Check, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, Check, Pencil, Star, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Button } from '@/components/ui/button';
 import { ApiClientError, api } from '@/lib/api/client';
-import { useDeleteProgram, useProgram, useUpdateTask } from '@/lib/api/queries';
+import { MemoComposer, MemoList } from '@/components/memos/MemoList';
+import { ProgramEditDialog } from '@/components/programs/ProgramEditDialog';
+import { useDeleteProgram, useMemos, useProgram, useUpdateTask } from '@/lib/api/queries';
 import { PALETTE } from '@/lib/domain/colors';
 import type { TaskDto } from '@/lib/domain/dto';
 import { cn } from '@/lib/utils';
@@ -18,8 +21,10 @@ export function ProgramDetail({ id }: { id: number }) {
   const router = useRouter();
   const qc = useQueryClient();
   const { data: program, isLoading, isError } = useProgram(id);
+  const { data: memos = [] } = useMemos({ programId: id });
   const update = useUpdateTask();
   const remove = useDeleteProgram();
+  const [editing, setEditing] = useState(false);
 
   if (isError) return <EmptyState title="일정을 찾을 수 없습니다" />;
   if (isLoading || !program) return <p className="text-ink-faint p-6 text-[13px]">불러오는 중</p>;
@@ -87,6 +92,10 @@ export function ProgramDetail({ id }: { id: number }) {
         >
           캘린더에서 보기
         </Link>
+        <Button variant="outline" onClick={() => setEditing(true)} className="h-[34px]">
+          <Pencil data-icon="inline-start" /> 수정
+        </Button>
+        <ProgramEditDialog program={program} open={editing} onOpenChange={setEditing} />
         {program.status === 'ACTIVE' ? (
           <Button variant="outline" onClick={() => setStatus('ARCHIVED')} className="h-[34px]">
             <Archive data-icon="inline-start" /> 보관
@@ -149,7 +158,20 @@ export function ProgramDetail({ id }: { id: number }) {
                     >
                       {t.done ? <Check className="size-2.5" strokeWidth={3} /> : null}
                     </button>
-                    <span className={cn('truncate', t.done && 'text-ink-faint line-through')}>
+                    {t.important ? (
+                      <Star
+                        className={cn('text-star size-3 shrink-0', t.done && 'opacity-50')}
+                        fill="currentColor"
+                        aria-label="중요"
+                      />
+                    ) : null}
+                    <span
+                      className={cn(
+                        'truncate',
+                        t.important && !t.done && 'font-semibold',
+                        t.done && 'text-ink-faint line-through',
+                      )}
+                    >
                       {t.title}
                     </span>
                     {!t.required ? (
@@ -167,6 +189,21 @@ export function ProgramDetail({ id }: { id: number }) {
                 </div>
               ))
             )}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-[13.5px] font-semibold">
+            메모 <span className="text-ink-faint">{memos.length}건</span>
+          </h2>
+          <div className="flex max-w-[720px] flex-col gap-2">
+            <MemoComposer programs={[]} fixedProgramId={id} compact />
+            <MemoList
+              memos={memos}
+              programs={[]}
+              showProgram={false}
+              emptyText="이 프로그램에 남긴 메모가 없습니다."
+            />
           </div>
         </section>
       </div>

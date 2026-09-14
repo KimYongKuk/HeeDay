@@ -1,11 +1,12 @@
 import { getDb } from '@/lib/db/client';
-import { createTask, getCalendarTask, listCalendarTasks } from '@/lib/db/repos/tasks';
+import { createTask, getCalendarTask, listCalendarTasks, listImportantTasks } from '@/lib/db/repos/tasks';
 import { taskCreateSchema } from '@/lib/domain/zod';
 import { ApiError, ok, parseBody, route } from '@/lib/api/handler';
 import { isISODate } from '@/lib/utils/dates';
 
 export const GET = route(async (req) => {
   const params = new URL(req.url).searchParams;
+  if (params.get('important') === '1') return ok(await listImportantTasks(getDb()));
   const programRaw = params.get('programId');
   const programId = programRaw && /^\d+$/.test(programRaw) ? Number(programRaw) : undefined;
   const from = params.get('from');

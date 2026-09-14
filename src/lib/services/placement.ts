@@ -6,7 +6,8 @@
  * build the unplaced drafts, flag questionable dates, and offer an optional even spread.
  */
 import type { DateWarning, ISODate, TaskDraft, TemplateSnapshot } from '@/lib/domain/types';
-import { addDaysISO, compareISO, isWeekend, toEpochDay } from '@/lib/utils/dates';
+import { WEEKDAY_LABEL } from '@/lib/domain/labels';
+import { addDaysISO, compareISO, isWeekend, toEpochDay, weekdayISO } from '@/lib/utils/dates';
 
 export function buildClosureSet(rows: ReadonlyArray<{ date: ISODate }>): ReadonlySet<ISODate> {
   return new Set(rows.map((r) => r.date));
@@ -34,6 +35,7 @@ export function draftsFromSnapshot(snapshot: TemplateSnapshot): TaskDraft[] {
       categoryName: it.categoryName,
       dueDate: null,
       required: it.required,
+      important: false,
       checklist: [...it.checklist],
     }));
 }
@@ -70,6 +72,8 @@ export interface WizardDraftInput {
   occurrences: Readonly<Record<string, ReadonlyArray<string>>>;
   /** draft key -> chosen date */
   placements: Readonly<Record<string, ISODate>>;
+  /** draft keys the user starred as 중요 */
+  important?: ReadonlyArray<string>;
 }
 
 /**
@@ -92,12 +96,14 @@ export function buildWizardDrafts(input: WizardDraftInput): TaskDraft[] {
       categoryName: null,
       dueDate: null,
       required: true,
+      important: false,
       checklist: e.checklist,
     })),
   ];
 
   // A draft persisted before 회차 existed rehydrates without `occurrences`.
   const occurrences = input.occurrences ?? {};
+  const important = new Set(input.important ?? []);
   const out: TaskDraft[] = [];
   for (const base of bases) {
     const keys = [base.key, ...(occurrences[base.key] ?? [])];
@@ -105,6 +111,7 @@ export function buildWizardDrafts(input: WizardDraftInput): TaskDraft[] {
       ...base,
       key,
       dueDate: input.placements[key] ?? null,
+      important: important.has(key),
     }));
     if (group.length === 1) {
       out.push(...group);
@@ -177,4 +184,98 @@ export function sortDrafts(a: TaskDraft, b: TaskDraft): number {
   if (a.dueDate === null) return 1;
   if (b.dueDate === null) return -1;
   return compareISO(a.dueDate, b.dueDate);
+}
+
+/** How a placed task repeats inside the program period. Expanded once into 회차; never stored. */
+export type RepeatRule = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY_DATE' | 'MONTHLY_WEEKDAY';
+
+export const REPEAT_RULES: ReadonlyArray<RepeatRule> = [
+  'WEEKLY',
+  'BIWEEKLY',
+  'MONTHLY_DATE',
+  'MONTHLY_WEEKDAY',
+];
+
+/** Hard cap on the 회차 one repeat can add, so a long period never floods the wizard. */
+export const REPEAT_CAP = 60;
+
+const ORDINAL_LABEL = ['첫째', '둘째', '셋째', '넷째', '다섯째'];
+
+function nthWeekdayOfMonth(date: ISODate): number {
+  return Math.ceil(Number(date.slice(8, 10)) / 7);
+}
+
+function daysInMonth(y: number, m: number): number {
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+/** `YYYY-MM-DD` for the nth (1-based) `weekday` of the month; null when the month has no such day. */
+function nthWeekdayISO(y: number, m: number, weekday: number, n: number): ISODate | null {
+  const first = weekdayISO(`${y}-${String(m).padStart(2, '0')}-01`);
+  const day = 1 + ((weekday - first + 7) % 7) + (n - 1) * 7;
+  if (day > daysInMonth(y, m)) return null;
+  return `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+/** "매주 수요일", "2주마다 수요일", "매월 15일", "매월 둘째 수요일" */
+export function repeatLabel(from: ISODate, rule: RepeatRule): string {
+  const w = WEEKDAY_LABEL[weekdayISO(from)];
+  switch (rule) {
+    case 'WEEKLY':
+      return `매주 ${w}요일`;
+    case 'BIWEEKLY':
+      return `2주마다 ${w}요일`;
+    case 'MONTHLY_DATE':
+      return `매월 ${Number(from.slice(8, 10))}일`;
+    case 'MONTHLY_WEEKDAY':
+      return `매월 ${ORDINAL_LABEL[nthWeekdayOfMonth(from) - 1]} ${w}요일`;
+  }
+}
+
+/**
+ * Dates after `from` that follow `rule`, never past the period end and at most `limit` of them
+ * (capped at REPEAT_CAP). Monthly rules skip months that lack the day (31일, 다섯째 주).
+ * `from` itself is not included; the caller already has that 회차.
+ */
+export function repeatDates(
+  from: ISODate,
+  rule: RepeatRule,
+  period: { endDate: ISODate },
+  limit: number = REPEAT_CAP,
+): ISODate[] {
+  const max = Math.max(0, Math.min(limit, REPEAT_CAP));
+  const out: ISODate[] = [];
+  if (max === 0 || compareISO(from, period.endDate) >= 0) return out;
+
+  if (rule === 'WEEKLY' || rule === 'BIWEEKLY') {
+    const step = rule === 'WEEKLY' ? 7 : 14;
+    let cur = addDaysISO(from, step);
+    while (compareISO(cur, period.endDate) <= 0 && out.length < max) {
+      out.push(cur);
+      cur = addDaysISO(cur, step);
+    }
+    return out;
+  }
+
+  const [y0, m0, d0] = from.split('-').map(Number);
+  const weekday = weekdayISO(from);
+  const nth = nthWeekdayOfMonth(from);
+  // Walk month by month; stop once the first of a month is already past the period.
+  for (let i = 1; out.length < max; i += 1) {
+    const total = m0 - 1 + i;
+    const y = y0 + Math.floor(total / 12);
+    const m = (total % 12) + 1;
+    const first = `${y}-${String(m).padStart(2, '0')}-01`;
+    if (compareISO(first, period.endDate) > 0) break;
+    const next =
+      rule === 'MONTHLY_DATE'
+        ? d0 <= daysInMonth(y, m)
+          ? `${y}-${String(m).padStart(2, '0')}-${String(d0).padStart(2, '0')}`
+          : null
+        : nthWeekdayISO(y, m, weekday, nth);
+    if (next === null) continue;
+    if (compareISO(next, period.endDate) > 0) break;
+    out.push(next);
+  }
+  return out;
 }

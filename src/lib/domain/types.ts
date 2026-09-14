@@ -49,6 +49,7 @@ export interface TaskDraft {
   categoryName: string | null;
   dueDate: ISODate | null;
   required: boolean;
+  important: boolean;
   checklist: string[];
 }
 

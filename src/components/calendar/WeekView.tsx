@@ -7,6 +7,7 @@ import { QuickAdd } from '@/components/calendar/QuickAdd';
 import type { CalendarTaskDto, ProgramListDto } from '@/lib/domain/dto';
 import { WEEKDAY_LABEL } from '@/lib/domain/labels';
 import type { ISODate } from '@/lib/domain/types';
+import { compareDayTasks } from '@/lib/services/calendarLayout';
 import { cn } from '@/lib/utils';
 import { weekdayISO } from '@/lib/utils/dates';
 
@@ -33,7 +34,7 @@ export function WeekView({
       map.set(t.dueDate, list);
     }
     for (const list of map.values())
-      list.sort((a, b) => Number(a.done) - Number(b.done) || a.id - b.id);
+      list.sort(compareDayTasks);
     return map;
   }, [tasks]);
 

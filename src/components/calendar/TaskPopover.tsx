@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Star, Trash2, X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { DateField } from '@/components/common/DateField';
@@ -15,11 +15,13 @@ import { useDeleteTask, useUpdateTask } from '@/lib/api/queries';
 import { PALETTE } from '@/lib/domain/colors';
 import type { CalendarTaskDto } from '@/lib/domain/dto';
 import type { ChecklistItem, ISODate } from '@/lib/domain/types';
+import { cn } from '@/lib/utils';
 
 interface Draft {
   title: string;
   dueDate: ISODate;
   done: boolean;
+  important: boolean;
   checklist: ChecklistItem[];
   notes: string;
 }
@@ -29,6 +31,7 @@ function fromTask(t: CalendarTaskDto): Draft {
     title: t.title,
     dueDate: t.dueDate,
     done: t.done,
+    important: t.important,
     checklist: t.checklist.map((c) => ({ ...c })),
     notes: t.notes ?? '',
   };
@@ -65,6 +68,7 @@ function TaskEditor({ task, onClose }: { task: CalendarTaskDto; onClose: () => v
           title: d.title.trim(),
           dueDate: d.dueDate,
           done: d.done,
+          important: d.important,
           checklist: d.checklist
             .map((c) => ({ text: c.text.trim(), checked: c.checked }))
             .filter((c) => c.text),
@@ -104,11 +108,26 @@ function TaskEditor({ task, onClose }: { task: CalendarTaskDto; onClose: () => v
       </div>
 
       <div className="flex flex-col gap-3 px-3.5 py-3">
-        <Input
-          value={d.title}
-          onChange={(e) => setD({ ...d, title: e.target.value })}
-          className="bg-surface h-9 text-[13.5px] font-medium"
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            value={d.title}
+            onChange={(e) => setD({ ...d, title: e.target.value })}
+            className="bg-surface h-9 text-[13.5px] font-medium"
+          />
+          <button
+            type="button"
+            onClick={() => setD({ ...d, important: !d.important })}
+            aria-label={d.important ? '중요 해제' : '중요 표시'}
+            aria-pressed={d.important}
+            title="중요한 업무로 표시합니다"
+            className={cn(
+              'border-line flex size-9 shrink-0 items-center justify-center rounded-md border',
+              d.important ? 'text-star bg-warn-soft/60' : 'text-ink-ghost hover:text-star bg-surface',
+            )}
+          >
+            <Star className="size-4" fill={d.important ? 'currentColor' : 'none'} />
+          </button>
+        </div>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <DateField
             value={d.dueDate}

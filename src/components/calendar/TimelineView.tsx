@@ -1,5 +1,6 @@
 'use client';
 
+import { Star } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { TaskPopover } from '@/components/calendar/TaskPopover';
@@ -139,10 +140,14 @@ export function TimelineView({
                         {showLabels ? (
                           <span
                             className={cn(
-                              'whitespace-nowrap',
+                              'flex items-center gap-0.5 whitespace-nowrap',
+                              t.important && !t.done && 'text-ink font-semibold',
                               t.done && 'text-ink-ghost line-through',
                             )}
                           >
+                            {t.important ? (
+                              <Star className="text-star size-2.5" fill="currentColor" />
+                            ) : null}
                             {t.title}
                           </span>
                         ) : null}

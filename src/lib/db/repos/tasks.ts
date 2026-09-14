@@ -18,6 +18,7 @@ export function toTaskDto(row: TaskRow): TaskDto {
     categoryName: row.categoryName,
     dueDate: row.dueDate,
     required: Boolean(row.required),
+    important: Boolean(row.important),
     done: Boolean(row.done),
     doneAt: row.doneAt ? new Date(row.doneAt).toISOString() : null,
     checklist: row.checklist ?? [],
@@ -38,6 +39,7 @@ export function placedToRows(programId: number, snapshot: TemplateSnapshot, plac
       categoryName: item?.categoryName ?? null,
       dueDate: p.dueDate,
       required: p.required,
+      important: p.important,
       done: false,
       doneAt: null,
       checklist: p.checklist.map((text) => ({ text, checked: false })),
@@ -90,6 +92,17 @@ export async function listCalendarTasks(
   return rows.map(withProgram);
 }
 
+/** Every open 중요 task of an active program, earliest first. Not bounded by a date range. */
+export async function listImportantTasks(db: Db): Promise<CalendarTaskDto[]> {
+  const rows = await db
+    .select({ task: tasks, program: programSelection })
+    .from(tasks)
+    .innerJoin(programs, eq(programs.id, tasks.programId))
+    .where(and(eq(tasks.important, true), eq(tasks.done, false), eq(programs.status, 'ACTIVE')))
+    .orderBy(asc(tasks.dueDate), asc(tasks.id));
+  return rows.map(withProgram);
+}
+
 export async function getCalendarTask(db: Db, id: number): Promise<CalendarTaskDto | null> {
   const [row] = await db
     .select({ task: tasks, program: programSelection })
@@ -109,6 +122,7 @@ export async function createTask(db: Db, input: TaskCreateInput): Promise<number
     categoryName: null,
     dueDate: input.dueDate,
     required: true,
+    important: input.important ?? false,
     done: false,
     doneAt: null,
     checklist: (input.checklist ?? []).map((text) => ({ text, checked: false })),
@@ -123,6 +137,7 @@ export async function updateTask(db: Db, id: number, patch: TaskPatchInput): Pro
   if (patch.dueDate !== undefined) set.dueDate = patch.dueDate;
   if (patch.notes !== undefined) set.notes = patch.notes;
   if (patch.checklist !== undefined) set.checklist = patch.checklist;
+  if (patch.important !== undefined) set.important = patch.important;
   if (patch.done !== undefined) {
     set.done = patch.done;
     set.doneAt = patch.done ? new Date() : null;

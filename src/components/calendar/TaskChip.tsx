@@ -1,6 +1,6 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { Check, Star } from 'lucide-react';
 import { PALETTE } from '@/lib/domain/colors';
 import type { CalendarTaskDto } from '@/lib/domain/dto';
 import { cn } from '@/lib/utils';
@@ -42,7 +42,20 @@ export function TaskChip({
       >
         {task.done ? <Check className="size-2.5 text-white" strokeWidth={3} /> : null}
       </button>
-      <span className={cn('truncate', task.done && 'line-through opacity-60')}>
+      {task.important ? (
+        <Star
+          className={cn('text-star size-3 shrink-0', task.done && 'opacity-50')}
+          fill="currentColor"
+          aria-label="중요"
+        />
+      ) : null}
+      <span
+        className={cn(
+          'truncate',
+          task.important && !task.done && 'font-semibold',
+          task.done && 'line-through opacity-60',
+        )}
+      >
         {showProgram ? `${task.templateName} ` : ''}
         {task.title}
       </span>

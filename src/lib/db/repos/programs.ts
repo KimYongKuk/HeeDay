@@ -82,7 +82,9 @@ export async function insertProgram(tx: Tx | Db, values: typeof programs.$inferI
 export async function updateProgram(
   db: Db,
   id: number,
-  patch: Partial<Pick<typeof programs.$inferInsert, 'name' | 'assignee' | 'color' | 'status'>>,
+  patch: Partial<
+    Pick<typeof programs.$inferInsert, 'name' | 'startDate' | 'endDate' | 'assignee' | 'color' | 'status'>
+  >,
 ): Promise<boolean> {
   if (Object.keys(patch).length === 0) return true;
   const [res] = await db.update(programs).set(patch).where(eq(programs.id, id));

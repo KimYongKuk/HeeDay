@@ -12,7 +12,13 @@ import { RightPanel } from '@/components/calendar/RightPanel';
 import { TimelineView } from '@/components/calendar/TimelineView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { ApiClientError } from '@/lib/api/client';
-import { useClosures, usePrograms, useTasks, useUpdateTask } from '@/lib/api/queries';
+import {
+  useClosures,
+  useImportantTasks,
+  usePrograms,
+  useTasks,
+  useUpdateTask,
+} from '@/lib/api/queries';
 import type { CalendarTaskDto } from '@/lib/domain/dto';
 import type { ISODate } from '@/lib/domain/types';
 import { addMonthsISO, monthGrid, timelineWindow, weekOf } from '@/lib/services/calendarLayout';
@@ -63,6 +69,7 @@ export function CalendarScreen() {
   const { data: tasks = [], isLoading } = useTasks({ ...range, programId });
   const { data: todayTasks = [] } = useTasks({ from: today, to: today, programId });
   const { data: weekTasks = [] } = useTasks({ from: thisWeek[0], to: thisWeek[6], programId });
+  const { data: importantTasks = [] } = useImportantTasks();
   const { data: programs = [] } = usePrograms({ status: 'ACTIVE' });
   const { data: closureRows = [] } = useClosures(range);
   const update = useUpdateTask();
@@ -176,6 +183,7 @@ export function CalendarScreen() {
               today={today}
               todayTasks={todayTasks}
               weekTasks={weekTasks}
+              importantTasks={programId ? importantTasks.filter((t) => t.programId === programId) : importantTasks}
               programs={programs}
               onToggle={onToggle}
             />

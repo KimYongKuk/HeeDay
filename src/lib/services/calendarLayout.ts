@@ -6,6 +6,16 @@ import type { ISODate } from '@/lib/domain/types';
 import { addDaysISO, compareISO, toEpochDay, weekdayISO } from '@/lib/utils/dates';
 
 /** Monday-start week containing `date`. */
+/** Order inside one day cell: undone before done, 중요 first within each, then insertion order. */
+export function compareDayTasks(
+  a: { done: boolean; important: boolean; id: number },
+  b: { done: boolean; important: boolean; id: number },
+): number {
+  return (
+    Number(a.done) - Number(b.done) || Number(b.important) - Number(a.important) || a.id - b.id
+  );
+}
+
 export function startOfWeekISO(date: ISODate): ISODate {
   const w = weekdayISO(date); // 0 = Sunday
   return addDaysISO(date, -((w + 6) % 7));

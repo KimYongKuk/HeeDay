@@ -10,6 +10,7 @@ import type {
   CalendarTaskDto,
   CategoryDto,
   ClosureDayDto,
+  MemoDto,
   ProgramDetailDto,
   ProgramListDto,
   TemplateDetailDto,
@@ -20,7 +21,10 @@ import type { ISODate, TemplateSnapshot } from '@/lib/domain/types';
 import type {
   ActionItemInput,
   ClosureInput,
+  MemoCreateInput,
+  MemoPatchInput,
   ProgramApproveInput,
+  ProgramPatchInput,
   TaskCreateInput,
   TaskPatchInput,
   TemplateInput,
@@ -220,6 +224,19 @@ export function useApproveProgram() {
   });
 }
 
+export function useUpdateProgram() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: number; patch: ProgramPatchInput }) =>
+      api<ProgramDetailDto>(`/api/programs/${id}`, { method: 'PATCH', json: patch }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['programs'] });
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['memos'] });
+    },
+  });
+}
+
 export function useDeleteProgram() {
   const qc = useQueryClient();
   return useMutation({
@@ -236,6 +253,14 @@ export function useTasks(range: { from: ISODate; to: ISODate; programId?: number
   return useQuery({
     queryKey: qk.tasks(range),
     queryFn: () => api<CalendarTaskDto[]>(`/api/tasks?${params.toString()}`),
+  });
+}
+
+/** Open 중요 tasks across all active programs, for the right panel. */
+export function useImportantTasks() {
+  return useQuery({
+    queryKey: qk.importantTasks(),
+    queryFn: () => api<CalendarTaskDto[]>('/api/tasks?important=1'),
   });
 }
 
@@ -299,5 +324,43 @@ export function useDeleteTask() {
       qc.invalidateQueries({ queryKey: ['tasks'] });
       qc.invalidateQueries({ queryKey: ['programs'] });
     },
+  });
+}
+
+/* ---------- memos ---------- */
+
+export function useMemos(filter?: { programId?: number }, enabled = true) {
+  const params = new URLSearchParams();
+  if (filter?.programId) params.set('programId', String(filter.programId));
+  const qs = params.toString();
+  return useQuery({
+    queryKey: qk.memos(filter),
+    queryFn: () => api<MemoDto[]>(`/api/memos${qs ? `?${qs}` : ''}`),
+    enabled,
+  });
+}
+
+export function useCreateMemo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: MemoCreateInput) => api<MemoDto>('/api/memos', { method: 'POST', json: input }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['memos'] }),
+  });
+}
+
+export function useUpdateMemo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: number; patch: MemoPatchInput }) =>
+      api<MemoDto>(`/api/memos/${id}`, { method: 'PATCH', json: patch }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['memos'] }),
+  });
+}
+
+export function useDeleteMemo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<void>(`/api/memos/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['memos'] }),
   });
 }

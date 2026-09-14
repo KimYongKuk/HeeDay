@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { Plus, Star } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -32,6 +32,7 @@ export function QuickAdd({
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [programId, setProgramId] = useState<string | null>(null);
+  const [important, setImportant] = useState(false);
   const create = useCreateTask();
 
   const candidates = programs.filter((p) => p.status === 'ACTIVE');
@@ -45,8 +46,10 @@ export function QuickAdd({
         programId: Number(effectiveProgram),
         title: title.trim(),
         dueDate: date,
+        important,
       });
       setTitle('');
+      setImportant(false);
       setOpen(false);
     } catch (err) {
       toast.error(err instanceof ApiClientError ? err.message : '추가에 실패했습니다.');
@@ -97,14 +100,29 @@ export function QuickAdd({
                 ))}
               </SelectContent>
             </Select>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && void submit()}
-              autoFocus
-              placeholder="할 일 이름"
-              className="border-line bg-surface focus:border-ring h-8 rounded-md border px-2.5 text-[13px] outline-none"
-            />
+            <div className="flex items-center gap-1.5">
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && void submit()}
+                autoFocus
+                placeholder="할 일 이름"
+                className="border-line bg-surface focus:border-ring h-8 min-w-0 flex-1 rounded-md border px-2.5 text-[13px] outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setImportant((v) => !v)}
+                aria-label={important ? '중요 해제' : '중요 표시'}
+                aria-pressed={important}
+                title="중요한 업무로 표시합니다"
+                className={cn(
+                  'border-line flex size-8 shrink-0 items-center justify-center rounded-md border',
+                  important ? 'text-star bg-warn-soft/60' : 'text-ink-ghost hover:text-star bg-surface',
+                )}
+              >
+                <Star className="size-3.5" fill={important ? 'currentColor' : 'none'} />
+              </button>
+            </div>
             <button
               type="button"
               onClick={submit}

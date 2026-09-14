@@ -35,6 +35,8 @@ export interface WizardState {
   extras: WizardExtra[];
   /** base key -> keys of the additional 회차 (occurrences) the user added, in creation order */
   occurrences: Record<string, string[]>;
+  /** draft keys starred as 중요 (per 회차, so one occurrence can matter more than the rest) */
+  important: string[];
   /** The name the wizard last proposed. Lets us tell an untouched name from a hand-typed one. */
   nameSuggestion: string;
   hydrated: boolean;
@@ -52,7 +54,10 @@ export interface WizardState {
   removeExtra: (key: string) => void;
   /** Add one more 회차 of the task behind `key` (any draft in its group); returns the new key. */
   addOccurrence: (key: string, date?: ISODate) => string;
+  /** Add one 회차 per date (a repeat expanded by the wizard); returns the new keys. */
+  addOccurrences: (key: string, dates: ReadonlyArray<ISODate>) => string[];
   removeOccurrence: (key: string) => void;
+  toggleImportant: (key: string) => void;
   setStep: (step: 1 | 2 | 3) => void;
   reset: () => void;
   setHydrated: () => void;
@@ -83,6 +88,7 @@ function initial() {
     removed: [] as string[],
     extras: [] as WizardExtra[],
     occurrences: {} as Record<string, string[]>,
+    important: [] as string[],
     nameSuggestion: '',
   };
 }
@@ -95,14 +101,18 @@ export function draftWorkCount(s: WizardState): number {
   return Object.keys(s.placements).length + s.extras.length + s.removed.length;
 }
 
-/** Drop `baseKey` and all of its 회차 from placements/occurrences. */
-function dropGroup(s: Pick<WizardState, 'placements' | 'occurrences'>, baseKey: string) {
+/** Drop `baseKey` and all of its 회차 from placements/occurrences/important. */
+function dropGroup(
+  s: Pick<WizardState, 'placements' | 'occurrences' | 'important'>,
+  baseKey: string,
+) {
+  const keys = [baseKey, ...(s.occurrences[baseKey] ?? [])];
   const placements = { ...s.placements };
-  delete placements[baseKey];
-  for (const k of s.occurrences[baseKey] ?? []) delete placements[k];
+  for (const k of keys) delete placements[k];
   const occurrences = { ...s.occurrences };
   delete occurrences[baseKey];
-  return { placements, occurrences };
+  const important = s.important.filter((k) => !keys.includes(k));
+  return { placements, occurrences, important };
 }
 
 export const useWizardStore = create<WizardState>()(
@@ -129,6 +139,7 @@ export const useWizardStore = create<WizardState>()(
             removed: same ? s.removed : [],
             extras: same ? s.extras : [],
             occurrences: same ? s.occurrences : {},
+            important: same ? s.important : [],
             nameSuggestion: defaults.name,
             form: {
               ...s.form,
@@ -173,6 +184,15 @@ export const useWizardStore = create<WizardState>()(
         }));
         return next;
       },
+      addOccurrences: (key, dates) => {
+        const baseKey = baseKeyOf(key);
+        const keys = dates.map(() => occurrenceKey(baseKey, newId()));
+        set((s) => ({
+          occurrences: { ...s.occurrences, [baseKey]: [...(s.occurrences[baseKey] ?? []), ...keys] },
+          placements: { ...s.placements, ...Object.fromEntries(keys.map((k, i) => [k, dates[i]])) },
+        }));
+        return keys;
+      },
       removeOccurrence: (key) =>
         set((s) => {
           const baseKey = baseKeyOf(key);
@@ -184,8 +204,15 @@ export const useWizardStore = create<WizardState>()(
               ...s.occurrences,
               [baseKey]: (s.occurrences[baseKey] ?? []).filter((k) => k !== key),
             },
+            important: s.important.filter((k) => k !== key),
           };
         }),
+      toggleImportant: (key) =>
+        set((s) => ({
+          important: s.important.includes(key)
+            ? s.important.filter((k) => k !== key)
+            : [...s.important, key],
+        })),
       setStep: (step) => set({ step }),
       reset: () => set({ ...initial() }),
       setHydrated: () => set({ hydrated: true }),
@@ -202,6 +229,7 @@ export const useWizardStore = create<WizardState>()(
         removed: s.removed,
         extras: s.extras,
         occurrences: s.occurrences,
+        important: s.important,
         nameSuggestion: s.nameSuggestion,
       }),
       onRehydrateStorage: () => (state) => state?.setHydrated(),

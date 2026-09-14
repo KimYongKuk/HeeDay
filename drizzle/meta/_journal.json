@@ -8,6 +8,20 @@
       "when": 1788445860963,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1789348912689,
+      "tag": "0001_task_important",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1789349123662,
+      "tag": "0002_memos",
+      "breakpoints": true
     }
   ]
 }

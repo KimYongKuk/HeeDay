@@ -75,6 +75,7 @@ export interface TaskDto {
   categoryName: string | null;
   dueDate: ISODate;
   required: boolean;
+  important: boolean;
   done: boolean;
   doneAt: string | null;
   checklist: ChecklistItem[];
@@ -115,6 +116,17 @@ export interface ApproveResultDto {
   programId: number;
   taskCount: number;
   reused: boolean;
+}
+
+export interface MemoDto {
+  id: number;
+  body: string;
+  programId: number | null;
+  /** present when the memo is tagged with a program */
+  programName: string | null;
+  programColor: ColorKey | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ClosureDayDto {

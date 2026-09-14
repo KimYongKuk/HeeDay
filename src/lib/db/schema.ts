@@ -121,6 +121,8 @@ export const tasks = mysqlTable(
     categoryName: varchar('category_name', { length: 40 }),
     dueDate: date('due_date', { mode: 'string' }).notNull(),
     required: boolean('required').notNull().default(true),
+    /** 놓치면 안 되는 일. Starred on the calendar and gathered in the right panel. */
+    important: boolean('important').notNull().default(false),
     done: boolean('done').notNull().default(false),
     doneAt: datetime('done_at', { fsp: 3 }),
     checklist: json('checklist').$type<ChecklistItem[]>().notNull(),
@@ -131,6 +133,7 @@ export const tasks = mysqlTable(
     index('idx_tasks_due').on(t.dueDate),
     index('idx_tasks_program_due').on(t.programId, t.dueDate),
     index('idx_tasks_done_due').on(t.done, t.dueDate),
+    index('idx_tasks_important').on(t.important, t.done, t.dueDate),
   ],
 );
 
@@ -149,6 +152,21 @@ export const closureDays = mysqlTable(
   (t) => [uniqueIndex('uq_closure_days_date').on(t.date)],
 );
 
+/**
+ * Free-form notes kept beside the calendar (못한 일, 해야 할 일). A memo may be tagged with one
+ * program; deleting that program keeps the memo and clears the tag.
+ */
+export const memos = mysqlTable(
+  'memos',
+  {
+    id: int('id').autoincrement().primaryKey(),
+    body: text('body').notNull(),
+    programId: int('program_id').references(() => programs.id, { onDelete: 'set null' }),
+    ...timestamps,
+  },
+  (t) => [index('idx_memos_program').on(t.programId), index('idx_memos_created').on(t.createdAt)],
+);
+
 export type CategoryRow = typeof categories.$inferSelect;
 export type ActionItemRow = typeof actionItems.$inferSelect;
 export type ProgramTemplateRow = typeof programTemplates.$inferSelect;
@@ -156,3 +174,4 @@ export type TemplateItemRow = typeof templateItems.$inferSelect;
 export type ProgramRow = typeof programs.$inferSelect;
 export type TaskRow = typeof tasks.$inferSelect;
 export type ClosureDayRow = typeof closureDays.$inferSelect;
+export type MemoRow = typeof memos.$inferSelect;

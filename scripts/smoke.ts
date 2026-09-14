@@ -23,6 +23,7 @@ const PAGES: { name: string; path: string }[] = [
   { name: 'wizard', path: '/programs/new' },
   { name: 'closures', path: '/closures' },
   { name: 'program', path: '/programs/1' },
+  { name: 'memos', path: '/memos' },
 ];
 
 async function main() {

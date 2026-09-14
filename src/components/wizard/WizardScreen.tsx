@@ -67,6 +67,7 @@ export function WizardScreen() {
       extras: s.extras,
       occurrences: s.occurrences,
       placements: s.placements,
+      important: s.important,
     });
     const unplaced = drafts.filter((d) => d.dueDate === null).length;
     if (unplaced > 0)
@@ -82,6 +83,7 @@ export function WizardScreen() {
       title: draftTitle({ title: d.title.trim(), session: d.session }),
       dueDate: d.dueDate as string,
       required: d.required,
+      important: d.important,
       checklist: d.checklist,
     }));
 

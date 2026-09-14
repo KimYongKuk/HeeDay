@@ -6,6 +6,7 @@ import {
   LayoutTemplate,
   ListChecks,
   SlidersHorizontal,
+  StickyNote,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -16,6 +17,7 @@ const ITEMS = [
   { href: '/library', label: '할 일 목록', icon: ListChecks },
   { href: '/templates', label: '프로그램 양식', icon: LayoutTemplate },
   { href: '/closures', label: '휴관일', icon: CalendarOff },
+  { href: '/memos', label: '메모', icon: StickyNote },
 ] as const;
 
 function NavItem({

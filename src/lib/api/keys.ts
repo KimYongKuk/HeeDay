@@ -8,5 +8,7 @@ export const qk = {
   programs: (filter?: { status?: string }) => ['programs', filter ?? {}] as const,
   program: (id: number) => ['programs', id] as const,
   tasks: (range: { from: string; to: string; programId?: number }) => ['tasks', 'range', range] as const,
+  importantTasks: () => ['tasks', 'important'] as const,
+  memos: (filter?: { programId?: number }) => ['memos', filter ?? {}] as const,
   closures: (range: { from?: string; to?: string }) => ['closures', range] as const,
 };

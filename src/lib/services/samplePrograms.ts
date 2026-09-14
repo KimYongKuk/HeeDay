@@ -55,6 +55,8 @@ async function register(opts: {
       title: d.title,
       dueDate: dates[i],
       required: d.required,
+      // 마지막 항목(보고·정산 성격)은 중요로 표시해 패널 묶음을 보여준다.
+      important: i === drafts.length - 1,
       checklist: d.checklist,
     })),
   });

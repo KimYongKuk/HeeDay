@@ -11,6 +11,9 @@ import {
   evenSpread,
   nearestBusinessDay,
   occurrenceKey,
+  REPEAT_CAP,
+  repeatDates,
+  repeatLabel,
 } from './placement';
 
 const closures = buildClosureSet(KR_HOLIDAYS_2026);
@@ -173,5 +176,60 @@ describe('buildWizardDrafts', () => {
     ]);
     expect(drafts.at(-1)!.templateItemId).toBeNull();
     expect(drafts.at(-1)!.checklist).toEqual(['출석부']);
+  });
+});
+
+describe('repeatDates', () => {
+  const period = { endDate: '2026-12-31' };
+
+  it('weekly: same weekday every 7 days, excluding the seed, until the period end', () => {
+    const out = repeatDates('2026-09-02', 'WEEKLY', { endDate: '2026-09-30' });
+    expect(out).toEqual(['2026-09-09', '2026-09-16', '2026-09-23', '2026-09-30']);
+  });
+
+  it('biweekly: every 14 days', () => {
+    expect(repeatDates('2026-09-02', 'BIWEEKLY', { endDate: '2026-10-15' })).toEqual([
+      '2026-09-16',
+      '2026-09-30',
+      '2026-10-14',
+    ]);
+  });
+
+  it('honours the count limit before the period end', () => {
+    expect(repeatDates('2026-09-02', 'WEEKLY', period, 2)).toEqual(['2026-09-09', '2026-09-16']);
+  });
+
+  it('monthly by date: skips months without that day', () => {
+    expect(repeatDates('2026-08-31', 'MONTHLY_DATE', period)).toEqual([
+      '2026-10-31',
+      '2026-12-31',
+    ]);
+  });
+
+  it('monthly by weekday: nth weekday of each month, skipping months without a 5th', () => {
+    // 2026-09-30 is the 5th Wednesday of September
+    expect(repeatDates('2026-09-30', 'MONTHLY_WEEKDAY', period)).toEqual(['2026-12-30']);
+    // 2026-09-09 is the 2nd Wednesday
+    expect(repeatDates('2026-09-09', 'MONTHLY_WEEKDAY', { endDate: '2026-11-30' })).toEqual([
+      '2026-10-14',
+      '2026-11-11',
+    ]);
+  });
+
+  it('returns nothing when the seed is on or after the period end', () => {
+    expect(repeatDates('2026-12-31', 'WEEKLY', period)).toEqual([]);
+  });
+
+  it('never exceeds REPEAT_CAP', () => {
+    expect(repeatDates('2020-01-01', 'WEEKLY', { endDate: '2030-01-01' })).toHaveLength(REPEAT_CAP);
+  });
+});
+
+describe('repeatLabel', () => {
+  it('describes the rule from the seed date', () => {
+    expect(repeatLabel('2026-09-09', 'WEEKLY')).toBe('매주 수요일');
+    expect(repeatLabel('2026-09-09', 'BIWEEKLY')).toBe('2주마다 수요일');
+    expect(repeatLabel('2026-09-09', 'MONTHLY_DATE')).toBe('매월 9일');
+    expect(repeatLabel('2026-09-09', 'MONTHLY_WEEKDAY')).toBe('매월 둘째 수요일');
   });
 });

@@ -1,14 +1,22 @@
 'use client';
 
-import { CalendarDays, CalendarOff, LayoutTemplate, ListChecks, Plus } from 'lucide-react';
+import {
+  CalendarDays,
+  CalendarOff,
+  LayoutTemplate,
+  ListChecks,
+  Plus,
+  StickyNote,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 const ITEMS = [
   { href: '/calendar', label: '캘린더', icon: CalendarDays },
-  { href: '/library', label: '할 일', icon: ListChecks },
+  { href: '/memos', label: '메모', icon: StickyNote },
   { href: '/programs/new', label: '등록', icon: Plus, primary: true },
+  { href: '/library', label: '할 일', icon: ListChecks },
   { href: '/templates', label: '양식', icon: LayoutTemplate },
   { href: '/closures', label: '휴관일', icon: CalendarOff },
 ] as const;
@@ -16,7 +24,7 @@ const ITEMS = [
 export function MobileNav() {
   const pathname = usePathname();
   return (
-    <nav className="border-line bg-surface/95 fixed inset-x-0 bottom-0 z-40 grid h-14 grid-cols-5 border-t backdrop-blur md:hidden print:hidden">
+    <nav className="border-line bg-surface/95 fixed inset-x-0 bottom-0 z-40 grid h-14 grid-cols-6 border-t backdrop-blur md:hidden print:hidden">
       {ITEMS.map((it) => {
         const active =
           pathname === it.href ||

@@ -63,6 +63,7 @@ export const placedTaskSchema = z.object({
   title: z.string().trim().min(1, '할 일 이름을 입력하세요.').max(120),
   dueDate: isoDateSchema,
   required: z.boolean().default(true),
+  important: z.boolean().default(false),
   checklist: z.array(checklistText).max(50).default([]),
 });
 export type PlacedTaskInput = z.infer<typeof placedTaskSchema>;
@@ -75,12 +76,20 @@ export const programApproveSchema = z.object({
 });
 export type ProgramApproveInput = z.infer<typeof programApproveSchema>;
 
-export const programPatchSchema = z.object({
-  name: z.string().trim().min(1).max(120).optional(),
-  assignee: z.string().trim().max(60).nullable().optional(),
-  color: colorSchema.optional(),
-  status: programStatusSchema.optional(),
-});
+export const programPatchSchema = z
+  .object({
+    name: z.string().trim().min(1, '일정 이름을 입력하세요.').max(120).optional(),
+    startDate: isoDateSchema.optional(),
+    endDate: isoDateSchema.optional(),
+    assignee: z.string().trim().max(60).nullable().optional(),
+    color: colorSchema.optional(),
+    status: programStatusSchema.optional(),
+  })
+  .refine((v) => !v.startDate || !v.endDate || v.startDate <= v.endDate, {
+    message: '종료일은 시작일보다 빠를 수 없습니다.',
+    path: ['endDate'],
+  });
+export type ProgramPatchInput = z.infer<typeof programPatchSchema>;
 
 const checklistItemSchema = z.object({ text: checklistText, checked: z.boolean() });
 
@@ -88,6 +97,7 @@ export const taskCreateSchema = z.object({
   programId: z.number().int().positive(),
   title: z.string().trim().min(1, '할 일 이름을 입력하세요.').max(120),
   dueDate: isoDateSchema,
+  important: z.boolean().optional(),
   checklist: z.array(checklistText).max(50).optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
 });
@@ -97,10 +107,25 @@ export const taskPatchSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
   dueDate: isoDateSchema.optional(),
   done: z.boolean().optional(),
+  important: z.boolean().optional(),
   checklist: z.array(checklistItemSchema).max(50).optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
 });
 export type TaskPatchInput = z.infer<typeof taskPatchSchema>;
+
+const memoBody = z.string().trim().min(1, '메모 내용을 입력하세요.').max(2000);
+
+export const memoCreateSchema = z.object({
+  body: memoBody,
+  programId: z.number().int().positive().nullable().optional(),
+});
+export type MemoCreateInput = z.infer<typeof memoCreateSchema>;
+
+export const memoPatchSchema = z.object({
+  body: memoBody.optional(),
+  programId: z.number().int().positive().nullable().optional(),
+});
+export type MemoPatchInput = z.infer<typeof memoPatchSchema>;
 
 export const closureInputSchema = z.object({
   date: isoDateSchema,

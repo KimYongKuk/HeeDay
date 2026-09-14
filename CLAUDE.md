@@ -12,6 +12,7 @@ The UI language is Korean. Keep all user-facing strings in Korean and use the ex
 
 - Next.js 16 App Router + TypeScript, pnpm, Tailwind v4, shadcn/ui (`base-nova` style on `@base-ui/react`, components in `src/components/ui`), TanStack Query, react-hook-form + zod v4, Zustand, dnd-kit, date-fns, Drizzle ORM + mysql2, Vitest.
 - No separate backend: Route Handlers under `src/app/api/*` call services in `src/lib/services/*`; DB access in `src/lib/db/*`. AI (AWS Bedrock) is a seam only in `src/lib/ai/`.
+- DB timestamps: the pool uses `timezone: 'Z'` + `dateStrings`, so `created_at`/`done_at` come back as the server's Seoul wall-clock time stamped `Z`. Read the date digits from the string (`slice(0, 10)`) rather than converting through `Date` in the browser.
 - Local DB: MariaDB 11.8 installed on the dev PC (`mysql://heeday:heeday@127.0.0.1:3306/heeday`, see `.env.example`). `docker-compose.yml` is an optional MySQL 8 alternative. Production target is a MySQL-compatible managed DB (TiDB Serverless / Aiven), so use only standard MySQL SQL: no `RETURNING`, no JSON column defaults, no MariaDB-only syntax.
 
 ```
@@ -38,12 +39,16 @@ Gotchas learned:
 - A program template is just an **ordered list of action items** (plus required flag and optional checklist override). There are **no phases (준비/진행/정리), no anchors, no offsets, no example dates, and no session rules**. All of those were removed on 2026-09-03 by the user; do not reintroduce them.
 - Scheduling is manual: in the registration wizard step 3 the user places each template task on a date (date picker or drag onto the period calendar). Nothing is auto-placed; "남은 항목 균등 배치" is an optional button the user presses. Weekend/closure/out-of-range dates are only warned about (`src/lib/services/placement.ts` `dateWarning`), never moved.
 - **회차 exist only inside wizard step 3**, added on 2026-09-04. A task can occur several times in one program: press 회차 추가 on its row, or drag an already-dated row onto another day. Templates still carry no 회차 count and the DB has no session column. `buildWizardDrafts` clones the base draft per occurrence, numbers the group 1..n **by date** (unplaced last), and approval bakes the number into the title (`수업 진행 2회차`). A task placed once stays unnumbered. Store keys: `item:3` / `adhoc:<uuid>` for the base, `<baseKey>#<uuid>` for each extra 회차, tracked in `wizardStore.occurrences`.
-- There is no overdue (지연) concept in the UI for now. The right panel shows 오늘, 이번 주, 프로그램 현황 (done/total).
+- There is no overdue (지연) concept in the UI for now. The right panel shows 오늘, 중요, 이번 주, 프로그램 현황 (done/total), 메모. The 중요 section does color a past due date red, which is the only place a missed date is called out.
 - Approval snapshots the template into `programs.template_snapshot` and stores the tasks exactly as placed; editing a template never changes registered programs.
 - Dates are `'YYYY-MM-DD'` strings end to end (`src/lib/utils/dates.ts`); "today" is Asia/Seoul via `todayInSeoul()`.
 - No login in the MVP. Do not store 어르신 personal data. The single staff user is `DEFAULT_ASSIGNEE` in `src/lib/domain/defaults.ts` (노성희); it prefills the wizard 담당자 field, the seed templates and the placeholders.
 - The wizard draft persists in localStorage (`heeday.wizard.v2`, `src/stores/wizardStore.ts`) **on purpose**: leaving to the calendar and coming back resumes the same draft at the same step. 새로 시작 clears it, 초안으로 저장 leaves and keeps it. Do not "fix" this into a reset-on-entry flow.
 - Switching to a **different** template in step 1 clears the task side (placements, 회차, exclusions, hand-added 할 일) and takes the new template's color, but keeps 기간 and 담당자 because those describe the program, not the template. 일정 이름 follows the new template unless the user typed their own (compared against `nameSuggestion`). `StepTemplate` confirms first via `draftWorkCount` and then reports both halves in a toast; never make this switch silent.
+- **반복 배치** (added 2026-09-14) lives only in wizard step 3: the 반복 button on a dated row (`RepeatPopover`) expands 매주 / 2주마다 / 매월 같은 날짜 / 매월 같은 주차 요일 into ordinary 회차 via `repeatDates()` + `addOccurrences()`, bounded by the program end date and `REPEAT_CAP` (60). No rule is stored anywhere; afterwards each 회차 is moved or deleted like any other. Months lacking the day (31일, 다섯째 주) are skipped.
+- **중요 (important)** is a per-task boolean (`tasks.important`), not a priority scale and not a template property. It means "놓치면 안 되는 일" across programs. Set from the wizard row star (per 회차, `wizardStore.important`), TaskPopover, or QuickAdd. Shown as a ★ on chips and in the right panel **중요** section (all open important tasks, any month, via `GET /api/tasks?important=1`). Within a day cell the order is undone → important → id (`compareDayTasks`).
+- **메모** (`memos` table) are free-form notes for 못한 일/해야 할 일, optionally tagged with one program (`program_id`, `ON DELETE SET NULL`). Untagged memos are plain notes. The tag is set and changed through the `#` picker (`ProgramTagPicker`) on the composer and on each memo's footer; nothing is parsed from the body text. They appear in the right panel as a compact block (latest 3 one-liners + a `+` popover composer, so the panel never grows), on `/memos` (full list with program filter chips), and in the program detail (that program's memos). Memos are not tasks: no date, no done flag, no calendar presence.
+- **일정 수정** (`ProgramEditDialog`, 2026-09-14): a registered program's 이름·기간·담당자·색 are editable from the detail header; `PATCH /api/programs/:id` accepts `startDate`/`endDate`. Tasks are never moved by this; the dialog only reports "기간 밖 할 일 N건". The template snapshot is untouched.
 - Enum codes in DB are ASCII (`PREP/RUN/WRAP`, `START/END/EACH_SESSION/SESSION_N`, …); Korean labels live in `src/lib/domain/labels.ts`. Categories are rows, not enums.
 
 ## Design artboards (`design/*.dc.html`)
@@ -61,7 +66,7 @@ These are Claude Design canvas artboards, not standalone pages. Each is a fixed 
 
 The mockups predate the simplification: phases, anchors, offsets and overdue shown there do not exist in the product, and their 회차 are scheduled entities rather than the per-task occurrences the wizard now has.
 
-Month view right panel sections: **오늘**, **이번 주** (upcoming undone tasks), **프로그램 현황** (done/total per program).
+Month view right panel sections: **오늘**, **중요** (open starred tasks, any date), **이번 주** (upcoming undone tasks), **프로그램 현황** (done/total per program), **메모** (latest 3 one-liners, `+` popover composer, link to `/memos`).
 
 ## Domain model
 
@@ -71,7 +76,7 @@ Month view right panel sections: **오늘**, **이번 주** (upcoming undone tas
 - **할 일 (task)** — checkbox item on a date; 완료 shows strikethrough; optional checklist and notes.
 - **휴관일 / 공휴일** — closure days tint the day cell and show a label next to the date; in the wizard they only produce a warning tag.
 
-Left nav order: 캘린더 · 할 일 목록 · 프로그램 양식 · 휴관일 · (spacer) · 설정 (할 일 목록 is the master; templates are built from it).
+Left nav order: 캘린더 · 할 일 목록 · 프로그램 양식 · 휴관일 · 메모 · (spacer) · 설정 (할 일 목록 is the master; templates are built from it). Mobile bottom tabs: 캘린더 · 메모 · 등록 · 할 일 · 양식 · 휴관일.
 
 Categories (분류) are a user-managed table (`categories`), not an enum: staff add/remove tabs with the +/− buttons on the 할 일 목록 screen. A category with items cannot be deleted. Tasks keep a denormalized `category_name` so history survives deletion.
 
