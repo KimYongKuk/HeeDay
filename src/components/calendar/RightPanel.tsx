@@ -3,12 +3,13 @@
 import { Check, Plus, Star } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
+import { AbsenceBadge, type AbsenceMark } from '@/components/calendar/AbsenceBadge';
 import { MemoComposer } from '@/components/memos/MemoList';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useMemos } from '@/lib/api/queries';
 import { PALETTE } from '@/lib/domain/colors';
 import type { CalendarTaskDto, ProgramListDto } from '@/lib/domain/dto';
-import { WEEKDAY_LABEL } from '@/lib/domain/labels';
+import { ABSENCE_KIND_LABEL, WEEKDAY_LABEL } from '@/lib/domain/labels';
 import type { ISODate } from '@/lib/domain/types';
 import { cn } from '@/lib/utils';
 import { compareDayTasks } from '@/lib/services/calendarLayout';
@@ -105,6 +106,7 @@ function MemoQuickAdd({ programs }: { programs: ProgramListDto[] }) {
 
 export function RightPanel({
   today,
+  todayAbsence,
   todayTasks,
   weekTasks,
   importantTasks,
@@ -112,6 +114,8 @@ export function RightPanel({
   onToggle,
 }: {
   today: ISODate;
+  /** the absence (휴가·출장) covering today, if any */
+  todayAbsence?: AbsenceMark;
   todayTasks: CalendarTaskDto[];
   weekTasks: CalendarTaskDto[];
   /** open 중요 tasks across every active program, earliest first */
@@ -135,6 +139,14 @@ export function RightPanel({
   return (
     <aside className="border-line bg-app flex w-[312px] shrink-0 flex-col gap-[22px] overflow-y-auto border-l px-5 pt-[18px] pb-6">
       <Section title="오늘" sub={`${m}월 ${d}일 ${WEEKDAY_LABEL[weekdayISO(today)]}요일`}>
+        {todayAbsence ? (
+          <div className="bg-away-soft text-away mb-2 flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12.5px] font-medium">
+            <AbsenceBadge mark={todayAbsence} label={false} iconClassName="size-3.5" />
+            <span className="truncate">
+              {ABSENCE_KIND_LABEL[todayAbsence.kind]} · {todayAbsence.name}
+            </span>
+          </div>
+        ) : null}
         <div className="border-line bg-surface rounded-[10px] border px-3">
           {todaySorted.length === 0 ? (
             <p className="text-ink-faint py-3 text-[12.5px]">오늘 예정된 할 일이 없습니다.</p>

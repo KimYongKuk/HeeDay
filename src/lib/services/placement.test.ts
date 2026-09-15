@@ -5,7 +5,9 @@ import {
   baseKeyOf,
   buildClosureSet,
   buildWizardDrafts,
+  absenceByDate,
   dateWarning,
+  expandAbsences,
   draftTitle,
   draftsFromSnapshot,
   evenSpread,
@@ -76,6 +78,33 @@ describe('dateWarning', () => {
     expect(dateWarning('2026-06-06', period, closures)).toBe('CLOSURE'); // 현충일 on a Saturday
     expect(dateWarning('2026-06-07', period, closures)).toBe('WEEKEND');
     expect(dateWarning('2026-06-09', period, closures)).toBeNull();
+  });
+
+  it('flags absence days after closures and before weekends', () => {
+    const absences = expandAbsences([{ startDate: '2026-06-03', endDate: '2026-06-07' }]);
+    expect([...absences]).toEqual([
+      '2026-06-03',
+      '2026-06-04',
+      '2026-06-05',
+      '2026-06-06',
+      '2026-06-07',
+    ]);
+    expect(dateWarning('2026-06-03', period, closures, absences)).toBe('CLOSURE');
+    expect(dateWarning('2026-06-04', period, closures, absences)).toBe('ABSENCE');
+    expect(dateWarning('2026-06-07', period, closures, absences)).toBe('ABSENCE');
+    expect(dateWarning('2026-06-08', period, closures, absences)).toBeNull();
+    expect(nearestBusinessDay('2026-06-05', closures, '2026-06-01', absences)).toBe('2026-06-02');
+  });
+
+  it('maps each covered date to the earliest-listed absence', () => {
+    const rows = [
+      { id: 1, startDate: '2026-06-03', endDate: '2026-06-04' },
+      { id: 2, startDate: '2026-06-04', endDate: '2026-06-05' },
+    ] as const;
+    const map = absenceByDate(rows);
+    expect(map.get('2026-06-04')?.id).toBe(1);
+    expect(map.get('2026-06-05')?.id).toBe(2);
+    expect(map.has('2026-06-06')).toBe(false);
   });
 });
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026-09-15] - 담당자 부재(휴가·출장) 표시와 휴관·부재 화면 통합
+
+- **추가** [drizzle/0003_absences.sql, src/lib/db/schema.ts, src/lib/db/repos/absences.ts, src/app/api/absences] 담당자 부재 기간 테이블 `absences`(시작일~종료일, 구분 휴가/출장/기타, 이름, 최대 90일)와 `GET/POST /api/absences`, `DELETE /api/absences/:id`. 히의 요구는 "특정 할 일의 출장 여부"가 아니라 "그 날 자리에 있는지"라서 할 일 플래그 대신 날짜 단위로 잡음. 휴관일 테이블에 종류를 얹지 않고 분리한 이유는 부재가 기간 단위이고 공휴일과 겹치며(휴관일은 날짜 고유 제약) 의미도 다르기 때문. **마이그레이션 필요** → [상세](docs/history/2026-09-15_부재-휴가-출장-표시.md)
+- **추가** [src/components/calendar/AbsenceBadge.tsx, DayCell.tsx, WeekView.tsx, MobileMonth.tsx, RightPanel.tsx, src/app/globals.css] 월·주·모바일 캘린더의 날짜 숫자 옆에 구분별 아이콘(출장 위치핀, 휴가 야자수, 기타 사람)과 이름, 셀에는 휴관일의 붉은색과 구분되는 옅은 호박색(`bg-away-soft`/`text-away`). 휴관일 이름이 있는 날은 아이콘만 남긴다. 우측 패널 오늘 섹션 위에 오늘 부재 한 줄 → [상세](docs/history/2026-09-15_부재-휴가-출장-표시.md)
+- **개선** [src/components/closures/ClosuresScreen.tsx, AbsenceForm.tsx, src/components/calendar/QuickAdd.tsx, SideNav.tsx, MobileNav.tsx, CommandPalette.tsx] 휴관일 화면을 **휴관·부재**로 확장(경로 `/closures` 유지): 목록에 두 종류가 날짜순으로 섞이고, 오른쪽 폼은 휴관일/부재 탭. 날짜 셀 `+` 팝오버에도 "이 날 부재 표시" 링크로 같은 폼을 띄워 메뉴를 찾아가지 않아도 되게 함. 자동 이동이 사라진 뒤에도 남아 있던 "직전 근무일로 조정됩니다" 부제를 사실에 맞게 고침 → [상세](docs/history/2026-09-15_부재-휴가-출장-표시.md)
+- **개선** [src/lib/services/placement.ts, src/components/wizard/StepPlace.tsx, RepeatPopover.tsx] 마법사 3단계에서 부재일을 휴관일과 같은 "일할 수 없는 날"로 취급: `dateWarning` 에 `ABSENCE`("부재") 경고 추가(우선순위 기간 외 > 휴관 > 부재 > 주말), 균등 배치·반복 배치가 부재일을 건너뛴다. 기존 원칙대로 옮기지는 않는다 → [상세](docs/history/2026-09-15_부재-휴가-출장-표시.md)
+- **개선** [CLAUDE.md] 부재 도메인 규칙(휴관과 합치지 말 것, 단일 직원, 경고 전용)과 nav 이름 반영
+- **추가** [scripts/migrate.ts, package.json, .env.example, .claude/ship.md] `pnpm db:migrate:prod`: `.env.local` 의 `PROD_DATABASE_URL` 로 운영 DB 마이그레이션. 운영 URL 을 앱이 읽는 `DATABASE_URL` 에 넣지 않으려는 분리이고, 2026-09-14 비밀번호 재발급 장애 뒤 접속값 규칙을 문서에 고정
+
 ## [2026-09-14] - 히 요청 기능(반복 배치·중요 표시·메모·일정 수정)과 Netlify keepalive
 
 - **추가** [src/components/wizard/RepeatPopover.tsx, src/lib/services/placement.ts, src/stores/wizardStore.ts] 일정 등록 3단계에서 날짜가 있는 할 일을 매주·2주마다·매월 같은 날짜·매월 같은 주차 요일로 반복해 회차로 한 번에 펼치는 반복 버튼. 규칙은 저장하지 않고 `repeatDates()` 결과를 `addOccurrences()` 로 회차에 넣기만 해서 기존 회차 모델·DB 를 그대로 둔다. 기간 밖은 만들지 않고 상한 60회 → [상세](docs/history/2026-09-14_반복배치-중요표시-메모-일정수정.md)

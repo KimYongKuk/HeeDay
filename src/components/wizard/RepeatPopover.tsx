@@ -34,6 +34,7 @@ export function RepeatPopover({
   taken,
   period,
   closures,
+  absences,
 }: {
   draft: TaskDraft;
   /** the date the repeat starts from */
@@ -42,6 +43,8 @@ export function RepeatPopover({
   taken: ReadonlySet<ISODate>;
   period: { startDate: ISODate; endDate: ISODate };
   closures: ReadonlySet<ISODate>;
+  /** 담당자 부재일. 휴관일처럼 경고 건수에 포함된다. */
+  absences: ReadonlySet<ISODate>;
 }) {
   const addOccurrences = useWizardStore((s) => s.addOccurrences);
   const [open, setOpen] = useState(false);
@@ -51,7 +54,7 @@ export function RepeatPopover({
 
   const limit = untilEnd ? REPEAT_CAP : Math.max(0, Math.min(REPEAT_CAP, count - 1));
   const dates = repeatDates(seed, rule, period, limit).filter((d) => !taken.has(d));
-  const flagged = dates.filter((d) => dateWarning(d, period, closures) !== null).length;
+  const flagged = dates.filter((d) => dateWarning(d, period, closures, absences) !== null).length;
 
   const apply = () => {
     if (dates.length === 0) return;
@@ -142,7 +145,7 @@ export function RepeatPopover({
                 {dates.length}개 추가, 마지막 {formatShort(dates[dates.length - 1])}
               </span>
               {flagged > 0 ? (
-                <span className="text-warn"> · 주말·휴관일 {flagged}건 포함</span>
+                <span className="text-warn"> · 주말·휴관·부재 {flagged}건 포함</span>
               ) : null}
             </>
           )}

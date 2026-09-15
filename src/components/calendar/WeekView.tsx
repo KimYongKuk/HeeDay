@@ -1,6 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
+import type { AbsenceMark } from '@/components/calendar/AbsenceBadge';
+import { AbsenceBadge } from '@/components/calendar/AbsenceBadge';
 import { CalendarItem } from '@/components/calendar/DayCell';
 import { DroppableDay } from '@/components/calendar/dnd';
 import { QuickAdd } from '@/components/calendar/QuickAdd';
@@ -17,6 +19,7 @@ export function WeekView({
   tasks,
   programs,
   closures,
+  absences,
   onToggle,
 }: {
   days: ISODate[];
@@ -24,6 +27,7 @@ export function WeekView({
   tasks: CalendarTaskDto[];
   programs: ProgramListDto[];
   closures: Map<ISODate, string>;
+  absences: Map<ISODate, AbsenceMark>;
   onToggle: (task: CalendarTaskDto) => void;
 }) {
   const byDate = useMemo(() => {
@@ -44,6 +48,7 @@ export function WeekView({
         const w = weekdayISO(date);
         const isToday = date === today;
         const holiday = closures.get(date);
+        const absence = absences.get(date);
         const list = byDate.get(date) ?? [];
         const tone = cn(
           isToday && 'text-brand',
@@ -58,11 +63,13 @@ export function WeekView({
               'group border-line flex flex-col border-b md:min-h-0 md:border-r md:border-b-0 md:last:border-r-0',
               holiday
                 ? 'bg-holiday'
-                : isToday
-                  ? 'bg-today'
-                  : w === 0 || w === 6
-                    ? 'bg-weekend'
-                    : 'bg-surface',
+                : absence
+                  ? 'bg-away-soft'
+                  : isToday
+                    ? 'bg-today'
+                    : w === 0 || w === 6
+                      ? 'bg-weekend'
+                      : 'bg-surface',
             )}
           >
             <div
@@ -79,6 +86,7 @@ export function WeekView({
                   {WEEKDAY_LABEL[w]}요일
                   {isToday ? ' · 오늘' : ''}
                 </span>
+                {absence ? <AbsenceBadge mark={absence} label={!holiday} /> : null}
                 {holiday ? <span className="text-sun/80 truncate">{holiday}</span> : null}
                 <QuickAdd
                   date={date}

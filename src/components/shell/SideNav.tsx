@@ -16,7 +16,7 @@ const ITEMS = [
   { href: '/calendar', label: '캘린더', icon: CalendarDays },
   { href: '/library', label: '할 일 목록', icon: ListChecks },
   { href: '/templates', label: '프로그램 양식', icon: LayoutTemplate },
-  { href: '/closures', label: '휴관일', icon: CalendarOff },
+  { href: '/closures', label: '휴관·부재', icon: CalendarOff },
   { href: '/memos', label: '메모', icon: StickyNote },
 ] as const;
 

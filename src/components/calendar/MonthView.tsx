@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import type { AbsenceMark } from '@/components/calendar/AbsenceBadge';
 import { DayCell } from '@/components/calendar/DayCell';
 import { LaneLayer } from '@/components/calendar/LaneLayer';
 import { useElementSize } from '@/hooks/useElementSize';
@@ -20,6 +21,7 @@ export function MonthView({
   tasks,
   programs,
   closures,
+  absences,
   loading,
   onToggle,
 }: {
@@ -29,6 +31,7 @@ export function MonthView({
   tasks: CalendarTaskDto[];
   programs: ProgramListDto[];
   closures: Map<ISODate, string>;
+  absences: Map<ISODate, AbsenceMark>;
   loading: boolean;
   onToggle: (task: CalendarTaskDto) => void;
 }) {
@@ -93,6 +96,7 @@ export function MonthView({
                 inMonth={date.slice(0, 7) === monthKey}
                 isToday={date === today}
                 holidayName={closures.get(date)}
+                absence={absences.get(date)}
                 tasks={byDate.get(date) ?? []}
                 programs={programs}
                 capacity={capacity}

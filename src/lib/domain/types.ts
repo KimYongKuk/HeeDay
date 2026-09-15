@@ -53,4 +53,4 @@ export interface TaskDraft {
   checklist: string[];
 }
 
-export type DateWarning = 'WEEKEND' | 'CLOSURE' | 'OUT_OF_RANGE';
+export type DateWarning = 'WEEKEND' | 'CLOSURE' | 'ABSENCE' | 'OUT_OF_RANGE';

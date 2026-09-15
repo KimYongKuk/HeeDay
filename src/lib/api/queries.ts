@@ -7,6 +7,7 @@ import type {
   ActionItemDetailDto,
   ActionItemDto,
   ApproveResultDto,
+  AbsenceDto,
   CalendarTaskDto,
   CategoryDto,
   ClosureDayDto,
@@ -19,6 +20,7 @@ import type {
 import type { ProgramStatus } from '@/lib/domain/enums';
 import type { ISODate, TemplateSnapshot } from '@/lib/domain/types';
 import type {
+  AbsenceInput,
   ActionItemInput,
   ClosureInput,
   MemoCreateInput,
@@ -188,6 +190,37 @@ export function useDeleteClosure() {
   return useMutation({
     mutationFn: (id: number) => api<void>(`/api/closures/${id}`, { method: 'DELETE' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['closures'] }),
+  });
+}
+
+// ---------- absences ----------
+
+export function useAbsences(range: { from?: ISODate; to?: ISODate }, enabled = true) {
+  const params = new URLSearchParams();
+  if (range.from) params.set('from', range.from);
+  if (range.to) params.set('to', range.to);
+  const qs = params.size > 0 ? `?${params.toString()}` : '';
+  return useQuery({
+    queryKey: qk.absences(range),
+    queryFn: () => api<AbsenceDto[]>(`/api/absences${qs}`),
+    enabled,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useCreateAbsence() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AbsenceInput) => api<{ id: number }>('/api/absences', { method: 'POST', json: input }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['absences'] }),
+  });
+}
+
+export function useDeleteAbsence() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<void>(`/api/absences/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['absences'] }),
   });
 }
 

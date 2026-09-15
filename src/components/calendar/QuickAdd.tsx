@@ -3,6 +3,7 @@
 import { Plus, Star } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { AbsenceForm } from '@/components/closures/AbsenceForm';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
@@ -33,7 +34,14 @@ export function QuickAdd({
   const [title, setTitle] = useState('');
   const [programId, setProgramId] = useState<string | null>(null);
   const [important, setImportant] = useState(false);
+  /** the same popover also marks the day as 부재 (휴가·출장) */
+  const [mode, setMode] = useState<'task' | 'absence'>('task');
   const create = useCreateTask();
+
+  const close = () => {
+    setOpen(false);
+    setMode('task');
+  };
 
   const candidates = programs.filter((p) => p.status === 'ACTIVE');
   const effectiveProgram = programId ?? (candidates.length === 1 ? String(candidates[0].id) : null);
@@ -50,14 +58,14 @@ export function QuickAdd({
       });
       setTitle('');
       setImportant(false);
-      setOpen(false);
+      close();
     } catch (err) {
       toast.error(err instanceof ApiClientError ? err.message : '추가에 실패했습니다.');
     }
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(v) => (v ? setOpen(true) : close())}>
       <PopoverTrigger
         render={
           <button
@@ -73,8 +81,12 @@ export function QuickAdd({
         <Plus className="size-3.5" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 gap-2.5 p-3">
-        <div className="text-[12.5px] font-semibold">{formatMonthDayKo(date)} 할 일 추가</div>
-        {candidates.length === 0 ? (
+        <div className="text-[12.5px] font-semibold">
+          {formatMonthDayKo(date)} {mode === 'task' ? '할 일 추가' : '부재 표시'}
+        </div>
+        {mode === 'absence' ? (
+          <AbsenceForm initialDate={date} compact onCreated={close} />
+        ) : candidates.length === 0 ? (
           <p className="text-ink-faint text-xs">
             진행 중인 프로그램이 없습니다. 일정을 먼저 등록하세요.
           </p>
@@ -133,6 +145,13 @@ export function QuickAdd({
             </button>
           </>
         )}
+        <button
+          type="button"
+          onClick={() => setMode((m) => (m === 'task' ? 'absence' : 'task'))}
+          className="text-ink-faint hover:text-ink -mb-0.5 self-start text-[11.5px] underline-offset-2 hover:underline"
+        >
+          {mode === 'task' ? '이 날 부재 표시(휴가·출장)' : '할 일 추가로 돌아가기'}
+        </button>
       </PopoverContent>
     </Popover>
   );

@@ -118,7 +118,7 @@ export function CommandPalette() {
               <LayoutTemplate /> 프로그램 양식
             </CommandItem>
             <CommandItem onSelect={() => go('/closures')}>
-              <CalendarOff /> 휴관일
+              <CalendarOff /> 휴관·부재
             </CommandItem>
             <CommandItem onSelect={() => go('/settings')}>
               <SlidersHorizontal /> 설정

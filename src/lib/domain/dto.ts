@@ -1,4 +1,4 @@
-import type { ClosureKind, ColorKey, ProgramStatus } from './enums';
+import type { AbsenceKind, ClosureKind, ColorKey, ProgramStatus } from './enums';
 import type { ChecklistItem, ISODate, TemplateSnapshot } from './types';
 
 export interface CategoryDto {
@@ -135,4 +135,13 @@ export interface ClosureDayDto {
   name: string;
   kind: ClosureKind;
   source: string;
+}
+
+/** 담당자 부재 기간(휴가·출장). 시작일과 종료일을 포함하는 연속 구간. */
+export interface AbsenceDto {
+  id: number;
+  startDate: ISODate;
+  endDate: ISODate;
+  kind: AbsenceKind;
+  name: string;
 }

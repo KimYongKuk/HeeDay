@@ -18,7 +18,7 @@ const ITEMS = [
   { href: '/programs/new', label: '등록', icon: Plus, primary: true },
   { href: '/library', label: '할 일', icon: ListChecks },
   { href: '/templates', label: '양식', icon: LayoutTemplate },
-  { href: '/closures', label: '휴관일', icon: CalendarOff },
+  { href: '/closures', label: '휴관·부재', icon: CalendarOff },
 ] as const;
 
 export function MobileNav() {

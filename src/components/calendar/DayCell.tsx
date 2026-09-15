@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { AbsenceBadge, type AbsenceMark } from '@/components/calendar/AbsenceBadge';
 import { DraggableTask, DroppableDay } from '@/components/calendar/dnd';
 import { QuickAdd } from '@/components/calendar/QuickAdd';
 import { TaskChip } from '@/components/calendar/TaskChip';
@@ -32,6 +33,7 @@ export function DayCell({
   inMonth,
   isToday,
   holidayName,
+  absence,
   tasks,
   programs,
   capacity,
@@ -41,6 +43,8 @@ export function DayCell({
   inMonth: boolean;
   isToday: boolean;
   holidayName?: string;
+  /** 담당자 부재(휴가·출장). 휴관일 표시가 있으면 아이콘만 남는다. */
+  absence?: AbsenceMark;
   tasks: CalendarTaskDto[];
   programs: ProgramListDto[];
   capacity: number;
@@ -65,11 +69,13 @@ export function DayCell({
         'group border-line flex min-w-0 flex-col border-r px-1.5 pt-1.5 pb-1 last:border-r-0',
         holidayName
           ? 'bg-holiday'
-          : isToday
-            ? 'bg-today'
-            : isSat || isSun
-              ? 'bg-weekend'
-              : 'bg-surface',
+          : absence
+            ? 'bg-away-soft'
+            : isToday
+              ? 'bg-today'
+              : isSat || isSun
+                ? 'bg-weekend'
+                : 'bg-surface',
       )}
     >
       <div className="flex h-[22px] items-center gap-1.5 text-xs font-medium">
@@ -83,6 +89,9 @@ export function DayCell({
             {day}
           </span>
         )}
+        {absence ? (
+          <AbsenceBadge mark={absence} label={!holidayName} className="text-[11px]" />
+        ) : null}
         {holidayName ? (
           <span className="text-sun/80 truncate text-[11px]">{holidayName}</span>
         ) : null}

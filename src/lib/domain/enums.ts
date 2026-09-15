@@ -6,3 +6,7 @@ export type ProgramStatus = (typeof PROGRAM_STATUSES)[number];
 
 export const CLOSURE_KINDS = ['PUBLIC_HOLIDAY', 'SUBSTITUTE', 'CENTER'] as const;
 export type ClosureKind = (typeof CLOSURE_KINDS)[number];
+
+/** 담당자 부재 종류. 휴관(기관)과 달리 사람이 자리를 비우는 날이다. */
+export const ABSENCE_KINDS = ['LEAVE', 'TRIP', 'OTHER'] as const;
+export type AbsenceKind = (typeof ABSENCE_KINDS)[number];

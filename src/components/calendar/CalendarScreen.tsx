@@ -13,6 +13,7 @@ import { TimelineView } from '@/components/calendar/TimelineView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { ApiClientError } from '@/lib/api/client';
 import {
+  useAbsences,
   useClosures,
   useImportantTasks,
   usePrograms,
@@ -22,6 +23,7 @@ import {
 import type { CalendarTaskDto } from '@/lib/domain/dto';
 import type { ISODate } from '@/lib/domain/types';
 import { addMonthsISO, monthGrid, timelineWindow, weekOf } from '@/lib/services/calendarLayout';
+import { absenceByDate } from '@/lib/services/placement';
 import { addDaysISO, formatMonthDayKo, isISODate, todayInSeoul } from '@/lib/utils/dates';
 
 const VIEWS: CalendarView[] = ['month', 'week', 'timeline'];
@@ -72,9 +74,13 @@ export function CalendarScreen() {
   const { data: importantTasks = [] } = useImportantTasks();
   const { data: programs = [] } = usePrograms({ status: 'ACTIVE' });
   const { data: closureRows = [] } = useClosures(range);
+  const { data: absenceRows = [] } = useAbsences(range);
+  const { data: todayAbsenceRows = [] } = useAbsences({ from: today, to: today });
   const update = useUpdateTask();
 
   const closures = useMemo(() => new Map(closureRows.map((c) => [c.date, c.name])), [closureRows]);
+  const absences = useMemo(() => absenceByDate(absenceRows), [absenceRows]);
+  const todayAbsence = todayAbsenceRows[0];
   const shownPrograms = programId ? programs.filter((p) => p.id === programId) : programs;
 
   const onToggle = useCallback(
@@ -151,6 +157,7 @@ export function CalendarScreen() {
               tasks={tasks}
               programs={shownPrograms}
               closures={closures}
+              absences={absences}
               onToggle={onToggle}
             />
           ) : view === 'month' ? (
@@ -161,6 +168,7 @@ export function CalendarScreen() {
               tasks={tasks}
               programs={shownPrograms}
               closures={closures}
+              absences={absences}
               loading={isLoading}
               onToggle={onToggle}
             />
@@ -171,6 +179,7 @@ export function CalendarScreen() {
               tasks={tasks}
               programs={shownPrograms}
               closures={closures}
+              absences={absences}
               onToggle={onToggle}
             />
           ) : (
@@ -181,6 +190,7 @@ export function CalendarScreen() {
           <div className="hidden lg:flex print:hidden">
             <RightPanel
               today={today}
+              todayAbsence={todayAbsence}
               todayTasks={todayTasks}
               weekTasks={weekTasks}
               importantTasks={programId ? importantTasks.filter((t) => t.programId === programId) : importantTasks}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { AbsenceBadge, ABSENCE_ICON, type AbsenceMark } from '@/components/calendar/AbsenceBadge';
 import { CalendarItem } from '@/components/calendar/DayCell';
 import { QuickAdd } from '@/components/calendar/QuickAdd';
 import { PALETTE } from '@/lib/domain/colors';
@@ -21,6 +22,7 @@ export function MobileMonth({
   tasks,
   programs,
   closures,
+  absences,
   onToggle,
 }: {
   weeks: ISODate[][];
@@ -29,6 +31,7 @@ export function MobileMonth({
   tasks: CalendarTaskDto[];
   programs: ProgramListDto[];
   closures: Map<ISODate, string>;
+  absences: Map<ISODate, AbsenceMark>;
   onToggle: (task: CalendarTaskDto) => void;
 }) {
   const [selected, setSelected] = useState<ISODate>(() =>
@@ -54,6 +57,7 @@ export function MobileMonth({
 
   const dayTasks = byDate.get(selected) ?? [];
   const holiday = closures.get(selected);
+  const absence = absences.get(selected);
 
   return (
     <div className="bg-surface flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -77,6 +81,8 @@ export function MobileMonth({
               const isSelected = date === selected;
               const list = byDate.get(date) ?? [];
               const dots = [...new Map(list.map((t) => [t.programColor, t])).values()].slice(0, 4);
+              const away = absences.get(date);
+              const AwayIcon = away ? ABSENCE_ICON[away.kind] : null;
               return (
                 <button
                   key={date}
@@ -86,6 +92,7 @@ export function MobileMonth({
                     'flex h-[52px] flex-col items-center gap-1 pt-1.5',
                     isSelected && 'bg-brand-soft',
                     !isSelected && closures.get(date) && 'bg-holiday',
+                    !isSelected && !closures.get(date) && away && 'bg-away-soft',
                   )}
                 >
                   <span
@@ -100,6 +107,12 @@ export function MobileMonth({
                     {Number(date.slice(8, 10))}
                   </span>
                   <span className="flex h-1.5 items-center gap-[3px]">
+                    {AwayIcon ? (
+                      <AwayIcon
+                        className={cn('text-away size-2.5 shrink-0', !inMonth && 'opacity-40')}
+                        strokeWidth={2.5}
+                      />
+                    ) : null}
                     {dots.map((t) => (
                       <span
                         key={t.id}
@@ -121,6 +134,7 @@ export function MobileMonth({
       <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
         <span className="text-[14px] font-semibold">{formatMonthDayKo(selected)}</span>
         {holiday ? <span className="text-sun text-xs">{holiday}</span> : null}
+        {absence ? <AbsenceBadge mark={absence} className="text-xs" /> : null}
         {selected === today ? (
           <span className="bg-brand-soft text-brand-deep rounded px-1.5 py-px text-[10.5px] font-semibold">
             오늘

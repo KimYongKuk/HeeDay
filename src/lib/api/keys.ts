@@ -11,4 +11,5 @@ export const qk = {
   importantTasks: () => ['tasks', 'important'] as const,
   memos: (filter?: { programId?: number }) => ['memos', filter ?? {}] as const,
   closures: (range: { from?: string; to?: string }) => ['closures', range] as const,
+  absences: (range: { from?: string; to?: string }) => ['absences', range] as const,
 };

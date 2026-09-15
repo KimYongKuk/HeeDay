@@ -12,7 +12,7 @@ import {
   uniqueIndex,
   varchar,
 } from 'drizzle-orm/mysql-core';
-import { CLOSURE_KINDS, COLOR_KEYS, PROGRAM_STATUSES } from '@/lib/domain/enums';
+import { ABSENCE_KINDS, CLOSURE_KINDS, COLOR_KEYS, PROGRAM_STATUSES } from '@/lib/domain/enums';
 import type { ChecklistItem, TemplateSnapshot } from '@/lib/domain/types';
 
 const timestamps = {
@@ -153,6 +153,23 @@ export const closureDays = mysqlTable(
 );
 
 /**
+ * 담당자 부재(휴가·출장·기타). 기관 휴관과 달리 기간 단위이고 공휴일과 겹칠 수 있어 별도 테이블이다.
+ * 로그인이 없는 단일 직원 구조라 담당자 컬럼은 두지 않는다.
+ */
+export const absences = mysqlTable(
+  'absences',
+  {
+    id: int('id').autoincrement().primaryKey(),
+    startDate: date('start_date', { mode: 'string' }).notNull(),
+    endDate: date('end_date', { mode: 'string' }).notNull(),
+    kind: mysqlEnum('kind', ABSENCE_KINDS).notNull(),
+    name: varchar('name', { length: 60 }).notNull(),
+    ...timestamps,
+  },
+  (t) => [index('idx_absences_range').on(t.startDate, t.endDate)],
+);
+
+/**
  * Free-form notes kept beside the calendar (못한 일, 해야 할 일). A memo may be tagged with one
  * program; deleting that program keeps the memo and clears the tag.
  */
@@ -174,4 +191,5 @@ export type TemplateItemRow = typeof templateItems.$inferSelect;
 export type ProgramRow = typeof programs.$inferSelect;
 export type TaskRow = typeof tasks.$inferSelect;
 export type ClosureDayRow = typeof closureDays.$inferSelect;
+export type AbsenceRow = typeof absences.$inferSelect;
 export type MemoRow = typeof memos.$inferSelect;

@@ -22,7 +22,8 @@ pnpm typecheck      # tsc --noEmit
 pnpm lint           # eslint .
 pnpm test           # vitest run (src/**/*.test.ts)
 pnpm db:generate    # drizzle-kit generate -> drizzle/*.sql (after editing src/lib/db/schema.ts)
-pnpm db:migrate     # apply migrations (scripts/migrate.ts)
+pnpm db:migrate     # apply migrations to the local DB (scripts/migrate.ts)
+pnpm db:migrate:prod # same against PROD_DATABASE_URL from .env.local (TLS on); run before pushing a schema change
 pnpm db:seed        # idempotent seed (scripts/seed.ts); --with-programs registers sample programs
 pnpm db:studio      # drizzle-kit studio
 pnpm smoke [outDir] # Playwright: screenshots + console errors for every screen (needs `pnpm dev` running)
@@ -48,6 +49,7 @@ Gotchas learned:
 - **반복 배치** (added 2026-09-14) lives only in wizard step 3: the 반복 button on a dated row (`RepeatPopover`) expands 매주 / 2주마다 / 매월 같은 날짜 / 매월 같은 주차 요일 into ordinary 회차 via `repeatDates()` + `addOccurrences()`, bounded by the program end date and `REPEAT_CAP` (60). No rule is stored anywhere; afterwards each 회차 is moved or deleted like any other. Months lacking the day (31일, 다섯째 주) are skipped.
 - **중요 (important)** is a per-task boolean (`tasks.important`), not a priority scale and not a template property. It means "놓치면 안 되는 일" across programs. Set from the wizard row star (per 회차, `wizardStore.important`), TaskPopover, or QuickAdd. Shown as a ★ on chips and in the right panel **중요** section (all open important tasks, any month, via `GET /api/tasks?important=1`). Within a day cell the order is undone → important → id (`compareDayTasks`).
 - **메모** (`memos` table) are free-form notes for 못한 일/해야 할 일, optionally tagged with one program (`program_id`, `ON DELETE SET NULL`). Untagged memos are plain notes. The tag is set and changed through the `#` picker (`ProgramTagPicker`) on the composer and on each memo's footer; nothing is parsed from the body text. They appear in the right panel as a compact block (latest 3 one-liners + a `+` popover composer, so the panel never grows), on `/memos` (full list with program filter chips), and in the program detail (that program's memos). Memos are not tasks: no date, no done flag, no calendar presence.
+- **부재** (`absences` table, 2026-09-15): 담당자가 자리를 비우는 기간(휴가 `LEAVE` / 출장 `TRIP` / 기타 `OTHER`), `start_date`~`end_date` 한 건, 이름 필수, 최대 90일. 휴관일과는 **별도 테이블**이다: 휴관은 기관이 닫힌 날(날짜당 1건, 공휴일 시드·API가 채움, 빨간 표시)이고 부재는 사람이 없는 날(기간, 공휴일과 겹쳐도 됨, 호박색 `bg-away-soft`/`text-away` 표시)이다. 이 둘을 합치지 말 것. 담당자 컬럼은 없다(단일 직원). 캘린더(월·주·모바일)에서 날짜 숫자 옆에 종류별 아이콘+이름(`AbsenceBadge`)이 붙고, 휴관일 이름이 있는 날은 아이콘만 남는다. 입력은 `/closures` 화면(휴관일·부재 탭)과 날짜 셀 `+` 팝오버의 "이 날 부재 표시" 두 곳(`AbsenceForm` 공용). 마법사 3단계에서는 휴관일과 같은 취급: `dateWarning` 이 `ABSENCE`("부재") 경고를 내고 균등·반복 배치가 건너뛴다. 옮기지는 않는다. 우측 패널 오늘 섹션 위에 오늘 부재가 한 줄로 뜬다.
 - **일정 수정** (`ProgramEditDialog`, 2026-09-14): a registered program's 이름·기간·담당자·색 are editable from the detail header; `PATCH /api/programs/:id` accepts `startDate`/`endDate`. Tasks are never moved by this; the dialog only reports "기간 밖 할 일 N건". The template snapshot is untouched.
 - Enum codes in DB are ASCII (`PREP/RUN/WRAP`, `START/END/EACH_SESSION/SESSION_N`, …); Korean labels live in `src/lib/domain/labels.ts`. Categories are rows, not enums.
 
@@ -75,8 +77,9 @@ Month view right panel sections: **오늘**, **중요** (open starred tasks, any
 - **일정 (program)** — a template instance with name, start/end, 담당자, color, snapshot, and the tasks the user placed.
 - **할 일 (task)** — checkbox item on a date; 완료 shows strikethrough; optional checklist and notes.
 - **휴관일 / 공휴일** — closure days tint the day cell and show a label next to the date; in the wizard they only produce a warning tag.
+- **부재 (absence)** — a period the staff member is away (휴가/출장/기타). Amber tint + kind icon next to the date; same wizard warning treatment as closures. Managed on the same `/closures` screen, stored separately.
 
-Left nav order: 캘린더 · 할 일 목록 · 프로그램 양식 · 휴관일 · 메모 · (spacer) · 설정 (할 일 목록 is the master; templates are built from it). Mobile bottom tabs: 캘린더 · 메모 · 등록 · 할 일 · 양식 · 휴관일.
+Left nav order: 캘린더 · 할 일 목록 · 프로그램 양식 · 휴관·부재 · 메모 · (spacer) · 설정 (할 일 목록 is the master; templates are built from it). Mobile bottom tabs: 캘린더 · 메모 · 등록 · 할 일 · 양식 · 휴관·부재. The 휴관·부재 route stays `/closures`.
 
 Categories (분류) are a user-managed table (`categories`), not an enum: staff add/remove tabs with the +/− buttons on the 할 일 목록 screen. A category with items cannot be deleted. Tasks keep a denormalized `category_name` so history survives deletion.
 

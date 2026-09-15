@@ -15,18 +15,21 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DateField } from '@/components/common/DateField';
 import { RepeatPopover } from '@/components/wizard/RepeatPopover';
-import { useClosures } from '@/lib/api/queries';
+import { AbsenceBadge, type AbsenceMark } from '@/components/calendar/AbsenceBadge';
+import { useAbsences, useClosures } from '@/lib/api/queries';
 import { PALETTE } from '@/lib/domain/colors';
 import { WEEKDAY_LABEL } from '@/lib/domain/labels';
 import type { DateWarning, ISODate, TaskDraft } from '@/lib/domain/types';
 import { addMonthsISO, monthGrid } from '@/lib/services/calendarLayout';
 import {
+  absenceByDate,
   buildClosureSet,
   buildWizardDrafts,
   dateWarning,
   draftTitle,
   draftsFromSnapshot,
   evenSpread,
+  expandAbsences,
 } from '@/lib/services/placement';
 import { useWizardStore } from '@/stores/wizardStore';
 import { cn } from '@/lib/utils';
@@ -42,6 +45,7 @@ import {
 const WARNING_LABEL: Record<DateWarning, string> = {
   WEEKEND: '주말',
   CLOSURE: '휴관일',
+  ABSENCE: '부재',
   OUT_OF_RANGE: '기간 외',
 };
 
@@ -94,15 +98,16 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
   const startDate = s.form.startDate as ISODate;
   const endDate = s.form.endDate as ISODate;
   const period = { startDate, endDate };
-  const { data: closureRows = [] } = useClosures({
-    from: addDaysISO(startDate, -31),
-    to: addDaysISO(endDate, 31),
-  });
+  const lookup = { from: addDaysISO(startDate, -31), to: addDaysISO(endDate, 31) };
+  const { data: closureRows = [] } = useClosures(lookup);
+  const { data: absenceRows = [] } = useAbsences(lookup);
   const closures = useMemo(() => buildClosureSet(closureRows), [closureRows]);
   const closureNames = useMemo(
     () => new Map(closureRows.map((c) => [c.date, c.name])),
     [closureRows],
   );
+  const absences = useMemo(() => expandAbsences(absenceRows), [absenceRows]);
+  const absenceMarks = useMemo(() => absenceByDate(absenceRows), [absenceRows]);
 
   const drafts: TaskDraft[] = useMemo(
     () =>
@@ -166,7 +171,7 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
   const spreadUnplaced = () => {
     const unplaced = drafts.filter((d) => d.dueDate === null);
     if (unplaced.length === 0) return toast.error('배치할 항목이 없습니다.');
-    const dates = evenSpread(unplaced.length, period, closures);
+    const dates = evenSpread(unplaced.length, period, closures, absences);
     s.placeMany(Object.fromEntries(unplaced.map((d, i) => [d.key, dates[i]])));
     toast.success(
       `${unplaced.length}개 항목을 기간에 균등 배치했습니다. 날짜는 개별 수정할 수 있습니다.`,
@@ -249,7 +254,9 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
                   );
                   const isExtra = d.templateItemId === null;
                   const isBase = d.key === d.baseKey;
-                  const warn = d.dueDate ? dateWarning(d.dueDate, period, closures) : null;
+                  const warn = d.dueDate
+                    ? dateWarning(d.dueDate, period, closures, absences)
+                    : null;
                   return (
                     <DraggableRow key={d.key} draft={d}>
                       <div
@@ -345,6 +352,7 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
                             taken={taken}
                             period={period}
                             closures={closures}
+                            absences={absences}
                           />
                         ) : (
                           <span />
@@ -434,6 +442,7 @@ export function StepPlace({ onSummary }: { onSummary: (s: PlacementSummary) => v
               monthStart={m}
               period={period}
               closureNames={closureNames}
+              absenceMarks={absenceMarks}
               byDate={byDate}
               color={color}
             />
@@ -475,12 +484,14 @@ function MiniMonth({
   monthStart,
   period,
   closureNames,
+  absenceMarks,
   byDate,
   color,
 }: {
   monthStart: ISODate;
   period: { startDate: ISODate; endDate: ISODate };
   closureNames: Map<ISODate, string>;
+  absenceMarks: Map<ISODate, AbsenceMark>;
   byDate: Map<ISODate, TaskDraft[]>;
   color: { solid: string; bg: string; text: string; border: string };
 }) {
@@ -509,6 +520,7 @@ function MiniMonth({
                 compareISO(date, period.startDate) >= 0 && compareISO(date, period.endDate) <= 0
               }
               closure={closureNames.get(date)}
+              absence={absenceMarks.get(date)}
               tasks={byDate.get(date) ?? []}
               color={color}
             />
@@ -524,6 +536,7 @@ function MiniDay({
   inMonth,
   inPeriod,
   closure,
+  absence,
   tasks,
   color,
 }: {
@@ -531,6 +544,7 @@ function MiniDay({
   inMonth: boolean;
   inPeriod: boolean;
   closure?: string;
+  absence?: AbsenceMark;
   tasks: TaskDraft[];
   color: { solid: string; bg: string; text: string; border: string };
 }) {
@@ -544,6 +558,7 @@ function MiniDay({
         !inMonth && 'bg-app/60',
         inMonth && !inPeriod && 'bg-weekend',
         closure && inMonth && 'bg-holiday',
+        !closure && absence && inMonth && 'bg-away-soft',
         isOver && 'ring-brand/50 ring-2 ring-inset',
       )}
     >
@@ -564,6 +579,9 @@ function MiniDay({
         >
           {Number(date.slice(8, 10))}
         </span>
+        {absence && inMonth ? (
+          <AbsenceBadge mark={absence} label={!closure} iconClassName="size-2.5" />
+        ) : null}
         {closure && inMonth ? <span className="text-sun/80 truncate">{closure}</span> : null}
       </div>
       {inMonth

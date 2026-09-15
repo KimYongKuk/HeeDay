@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { isISODate } from '@/lib/utils/dates';
-import { CLOSURE_KINDS, COLOR_KEYS, PROGRAM_STATUSES } from './enums';
+import { ABSENCE_KINDS, CLOSURE_KINDS, COLOR_KEYS, PROGRAM_STATUSES } from './enums';
 
 export const isoDateSchema = z
   .string()
@@ -8,6 +8,7 @@ export const isoDateSchema = z
 
 export const colorSchema = z.enum(COLOR_KEYS);
 export const closureKindSchema = z.enum(CLOSURE_KINDS);
+export const absenceKindSchema = z.enum(ABSENCE_KINDS);
 export const programStatusSchema = z.enum(PROGRAM_STATUSES);
 
 const checklistText = z.string().trim().min(1).max(100);
@@ -133,3 +134,27 @@ export const closureInputSchema = z.object({
   kind: closureKindSchema.default('CENTER'),
 });
 export type ClosureInput = z.infer<typeof closureInputSchema>;
+
+/** 부재는 최대 90일까지. 연 단위 오입력을 막는다. */
+export const ABSENCE_MAX_DAYS = 90;
+
+export const absenceInputSchema = z
+  .object({
+    startDate: isoDateSchema,
+    endDate: isoDateSchema,
+    kind: absenceKindSchema,
+    name: z.string().trim().min(1, '이름을 입력하세요.').max(60),
+  })
+  .refine((v) => v.endDate >= v.startDate, {
+    message: '종료일은 시작일과 같거나 뒤여야 합니다.',
+    path: ['endDate'],
+  })
+  .refine((v) => daySpan(v.startDate, v.endDate) <= ABSENCE_MAX_DAYS, {
+    message: `부재 기간은 ${ABSENCE_MAX_DAYS}일을 넘을 수 없습니다.`,
+    path: ['endDate'],
+  });
+export type AbsenceInput = z.infer<typeof absenceInputSchema>;
+
+function daySpan(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+}

@@ -30,6 +30,9 @@
   --color-weekend: #faf9f7;
   --color-today: #f7f8fe;
   --color-holiday: #fdf7f6;
+  /* 담당자 부재(휴가·출장) 날짜: 휴관의 붉은 기운과 구분되는 옅은 호박색 */
+  --color-away: #9a6a0f;
+  --color-away-soft: #fdf8ea;
   --color-warn: #8a5a09;
   --color-warn-soft: #fbefd6;
   --color-star: #d9970a;

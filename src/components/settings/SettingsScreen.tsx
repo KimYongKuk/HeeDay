@@ -29,10 +29,10 @@ export function SettingsScreen() {
           <dd>달성군남부노인복지관</dd>
           <dt className="text-ink-faint">기준 시간대</dt>
           <dd>Asia/Seoul</dd>
-          <dt className="text-ink-faint">휴관일</dt>
+          <dt className="text-ink-faint">휴관·부재</dt>
           <dd>
             <Link href="/closures" className="text-brand hover:underline">
-              휴관일 관리
+              휴관일·부재 관리
             </Link>
           </dd>
         </dl>

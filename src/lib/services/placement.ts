@@ -13,8 +13,39 @@ export function buildClosureSet(rows: ReadonlyArray<{ date: ISODate }>): Readonl
   return new Set(rows.map((r) => r.date));
 }
 
-export function isBusinessDay(date: ISODate, closures: ReadonlySet<ISODate>): boolean {
-  return !isWeekend(date) && !closures.has(date);
+const NONE: ReadonlySet<ISODate> = new Set();
+
+/** Every date covered by absence periods (휴가·출장), inclusive of both ends. */
+export function expandAbsences(
+  rows: ReadonlyArray<{ startDate: ISODate; endDate: ISODate }>,
+): ReadonlySet<ISODate> {
+  const out = new Set<ISODate>();
+  for (const r of rows) {
+    for (let d = r.startDate; compareISO(d, r.endDate) <= 0; d = addDaysISO(d, 1)) out.add(d);
+  }
+  return out;
+}
+
+/** Date -> the absence covering it; the earliest-listed row wins when periods overlap. */
+export function absenceByDate<T extends { startDate: ISODate; endDate: ISODate }>(
+  rows: ReadonlyArray<T>,
+): Map<ISODate, T> {
+  const out = new Map<ISODate, T>();
+  for (const r of rows) {
+    for (let d = r.startDate; compareISO(d, r.endDate) <= 0; d = addDaysISO(d, 1)) {
+      if (!out.has(d)) out.set(d, r);
+    }
+  }
+  return out;
+}
+
+/** A day the staff can work on: not a weekend, not a closure, not an absence. */
+export function isBusinessDay(
+  date: ISODate,
+  closures: ReadonlySet<ISODate>,
+  absences: ReadonlySet<ISODate> = NONE,
+): boolean {
+  return !isWeekend(date) && !closures.has(date) && !absences.has(date);
 }
 
 export function itemKey(templateItemId: number): string {
@@ -132,10 +163,12 @@ export function dateWarning(
   date: ISODate,
   period: { startDate: ISODate; endDate: ISODate },
   closures: ReadonlySet<ISODate>,
+  absences: ReadonlySet<ISODate> = NONE,
 ): DateWarning | null {
   if (compareISO(date, period.startDate) < 0 || compareISO(date, period.endDate) > 0)
     return 'OUT_OF_RANGE';
   if (closures.has(date)) return 'CLOSURE';
+  if (absences.has(date)) return 'ABSENCE';
   if (isWeekend(date)) return 'WEEKEND';
   return null;
 }
@@ -145,16 +178,17 @@ export function nearestBusinessDay(
   date: ISODate,
   closures: ReadonlySet<ISODate>,
   floor: ISODate,
+  absences: ReadonlySet<ISODate> = NONE,
 ): ISODate {
   let cur = date;
   for (let i = 0; i < 14; i += 1) {
-    if (isBusinessDay(cur, closures)) return cur;
+    if (isBusinessDay(cur, closures, absences)) return cur;
     if (compareISO(cur, floor) <= 0) break;
     cur = addDaysISO(cur, -1);
   }
   cur = date;
   for (let i = 0; i < 14; i += 1) {
-    if (isBusinessDay(cur, closures)) return cur;
+    if (isBusinessDay(cur, closures, absences)) return cur;
     cur = addDaysISO(cur, 1);
   }
   return date;
@@ -168,13 +202,16 @@ export function evenSpread(
   count: number,
   period: { startDate: ISODate; endDate: ISODate },
   closures: ReadonlySet<ISODate>,
+  absences: ReadonlySet<ISODate> = NONE,
 ): ISODate[] {
   if (count <= 0) return [];
   const span = toEpochDay(period.endDate) - toEpochDay(period.startDate);
   const out: ISODate[] = [];
   for (let i = 0; i < count; i += 1) {
     const offset = count === 1 ? 0 : Math.round((i * span) / (count - 1));
-    out.push(nearestBusinessDay(addDaysISO(period.startDate, offset), closures, period.startDate));
+    out.push(
+      nearestBusinessDay(addDaysISO(period.startDate, offset), closures, period.startDate, absences),
+    );
   }
   return out;
 }
