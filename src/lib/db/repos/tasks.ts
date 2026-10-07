@@ -5,7 +5,7 @@ import { programs, tasks, type TaskRow } from '@/lib/db/schema';
 import type { CalendarTaskDto, TaskDto } from '@/lib/domain/dto';
 import type { ColorKey } from '@/lib/domain/enums';
 import type { ISODate, TemplateSnapshot } from '@/lib/domain/types';
-import type { PlacedTaskInput, TaskCreateInput, TaskPatchInput } from '@/lib/domain/zod';
+import type { PlacedTaskInput, TaskCreateInput, TaskPatchInput, TaskRestoreInput } from '@/lib/domain/zod';
 
 const CHUNK = 200;
 
@@ -147,6 +147,15 @@ export async function updateTask(db: Db, id: number, patch: TaskPatchInput): Pro
   if (Object.keys(set).length === 0) return true;
   const [res] = await db.update(tasks).set(set).where(eq(tasks.id, id));
   return res.affectedRows > 0;
+}
+
+/** Re-inserts deleted tasks with their original ids (one transaction). */
+export async function restoreTasks(db: Db, rows: TaskRestoreInput['tasks']): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.insert(tasks).values(
+      rows.map((r) => ({ ...r, doneAt: r.status === 'DONE' && r.doneAt ? new Date(r.doneAt) : null })),
+    );
+  });
 }
 
 export async function deleteTask(db: Db, id: number): Promise<boolean> {

@@ -109,6 +109,7 @@ export function useAssistant() {
   const refresh = useCallback(() => {
     qc.invalidateQueries({ queryKey: ['tasks'] });
     qc.invalidateQueries({ queryKey: ['programs'] });
+    qc.invalidateQueries({ queryKey: ['memos'] });
   }, [qc]);
 
   const send = useCallback((raw: string) => {

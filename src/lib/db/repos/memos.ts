@@ -3,7 +3,7 @@ import type { Db, Tx } from '@/lib/db/client';
 import { memos, programs, type MemoRow } from '@/lib/db/schema';
 import type { MemoDto } from '@/lib/domain/dto';
 import type { ColorKey } from '@/lib/domain/enums';
-import type { MemoCreateInput, MemoPatchInput } from '@/lib/domain/zod';
+import type { MemoCreateInput, MemoPatchInput, MemoRestoreInput } from '@/lib/domain/zod';
 
 function toDto(row: { memo: MemoRow; program: { name: string; color: ColorKey } | null }): MemoDto {
   return {
@@ -53,6 +53,15 @@ export async function updateMemo(db: Db, id: number, patch: MemoPatchInput): Pro
   if (Object.keys(set).length === 0) return true;
   const [res] = await db.update(memos).set(set).where(eq(memos.id, id));
   return res.affectedRows > 0;
+}
+
+/** Re-inserts deleted memos with their original ids and timestamps (one transaction). */
+export async function restoreMemos(db: Db, rows: MemoRestoreInput['memos']): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.insert(memos).values(
+      rows.map((r) => ({ ...r, createdAt: new Date(r.createdAt), updatedAt: new Date(r.updatedAt) })),
+    );
+  });
 }
 
 export async function deleteMemo(db: Db, id: number): Promise<boolean> {

@@ -128,6 +128,50 @@ export const memoPatchSchema = z.object({
 });
 export type MemoPatchInput = z.infer<typeof memoPatchSchema>;
 
+const isoTimestamp = z.string().refine((v) => !Number.isNaN(Date.parse(v)), { message: '시각 형식이 올바르지 않습니다.' });
+
+/** Deleted tasks put back exactly as they were (same id), for 되돌리기 after a delete. */
+export const taskRestoreSchema = z.object({
+  tasks: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        programId: z.number().int().positive(),
+        templateItemId: z.number().int().positive().nullable(),
+        title: z.string().trim().min(1).max(120),
+        categoryId: z.number().int().positive().nullable(),
+        categoryName: z.string().max(40).nullable(),
+        dueDate: isoDateSchema,
+        required: z.boolean(),
+        important: z.boolean(),
+        status: z.enum(TASK_STATUSES),
+        doneAt: isoTimestamp.nullable(),
+        checklist: z.array(checklistItemSchema).max(50),
+        notes: z.string().max(2000).nullable(),
+      }),
+    )
+    .min(1)
+    .max(10),
+});
+export type TaskRestoreInput = z.infer<typeof taskRestoreSchema>;
+
+/** Deleted memos put back with their id and timestamps, so list order is unchanged. */
+export const memoRestoreSchema = z.object({
+  memos: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        body: memoBody,
+        programId: z.number().int().positive().nullable(),
+        createdAt: isoTimestamp,
+        updatedAt: isoTimestamp,
+      }),
+    )
+    .min(1)
+    .max(10),
+});
+export type MemoRestoreInput = z.infer<typeof memoRestoreSchema>;
+
 export const closureInputSchema = z.object({
   date: isoDateSchema,
   name: z.string().trim().min(1, '이름을 입력하세요.').max(60),

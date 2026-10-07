@@ -3,13 +3,18 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { PendingToolResult, TranscriptMessage, WriteOutcome, WriteProposal } from '@/lib/ai/protocol';
+import type { CalendarTaskDto, MemoDto } from '@/lib/domain/dto';
 
 export type ProposalState = 'pending' | 'applying' | 'applied' | 'cancelled' | 'failed' | 'skipped' | 'undone';
 
 /** What 되돌리기 needs to restore after a proposal was applied. */
 export type UndoInfo =
   | { kind: 'delete_task'; taskId: number }
-  | { kind: 'patch_tasks'; patches: { id: number; patch: Record<string, unknown> }[] };
+  | { kind: 'patch_tasks'; patches: { id: number; patch: Record<string, unknown> }[] }
+  | { kind: 'restore_tasks'; tasks: CalendarTaskDto[] }
+  | { kind: 'delete_memo'; memoId: number }
+  | { kind: 'patch_memo'; id: number; patch: Record<string, unknown> }
+  | { kind: 'restore_memos'; memos: MemoDto[] };
 
 export type ChatItem =
   | { id: string; role: 'user'; text: string }

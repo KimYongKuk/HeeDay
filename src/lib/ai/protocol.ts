@@ -3,6 +3,7 @@
  * imports no provider SDK: API messages travel as opaque JSON that the client stores and sends
  * back unchanged (the conversation is append-only; editing earlier turns invalidates them).
  */
+import type { CalendarTaskDto, MemoDto } from '@/lib/domain/dto';
 import type { ColorKey, TaskStatus } from '@/lib/domain/enums';
 import type { DateWarning, ISODate } from '@/lib/domain/types';
 
@@ -49,7 +50,23 @@ export type WriteProposal =
     }
   | { kind: 'set_task_status'; toolUseId: string; status: TaskStatus; tasks: TaskRef[] }
   | { kind: 'move_task'; toolUseId: string; task: TaskRef; toDate: ISODate; warning: DateWarning | null }
-  | { kind: 'append_task_note'; toolUseId: string; task: TaskRef; text: string };
+  | { kind: 'append_task_note'; toolUseId: string; task: TaskRef; text: string }
+  | {
+      kind: 'update_task';
+      toolUseId: string;
+      task: TaskRef & { important: boolean };
+      /** null = unchanged */
+      title: string | null;
+      important: boolean | null;
+      addChecklist: string[];
+      checkItems: string[];
+      uncheckItems: string[];
+    }
+  /** Full rows as they were, so 되돌리기 can restore them with the same ids. */
+  | { kind: 'delete_tasks'; toolUseId: string; tasks: CalendarTaskDto[] }
+  | { kind: 'add_memo'; toolUseId: string; body: string; program: { id: number; name: string; color: ColorKey } | null }
+  | { kind: 'update_memo'; toolUseId: string; memo: MemoDto; body: string }
+  | { kind: 'delete_memos'; toolUseId: string; memos: MemoDto[] };
 
 export type AssistantEvent =
   /** Store this message at the end of the transcript. */
