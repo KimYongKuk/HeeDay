@@ -1,4 +1,5 @@
-import { and, asc, eq, gte, lte } from 'drizzle-orm';
+import { and, asc, eq, gte, lte, ne, sql } from 'drizzle-orm';
+import type { MySqlUpdateSetSource } from 'drizzle-orm/mysql-core';
 import type { Db, Tx } from '@/lib/db/client';
 import { programs, tasks, type TaskRow } from '@/lib/db/schema';
 import type { CalendarTaskDto, TaskDto } from '@/lib/domain/dto';
@@ -19,7 +20,7 @@ export function toTaskDto(row: TaskRow): TaskDto {
     dueDate: row.dueDate,
     required: Boolean(row.required),
     important: Boolean(row.important),
-    done: Boolean(row.done),
+    status: row.status,
     doneAt: row.doneAt ? new Date(row.doneAt).toISOString() : null,
     checklist: row.checklist ?? [],
     notes: row.notes,
@@ -40,7 +41,7 @@ export function placedToRows(programId: number, snapshot: TemplateSnapshot, plac
       dueDate: p.dueDate,
       required: p.required,
       important: p.important,
-      done: false,
+      status: 'TODO',
       doneAt: null,
       checklist: p.checklist.map((text) => ({ text, checked: false })),
       notes: null,
@@ -98,7 +99,7 @@ export async function listImportantTasks(db: Db): Promise<CalendarTaskDto[]> {
     .select({ task: tasks, program: programSelection })
     .from(tasks)
     .innerJoin(programs, eq(programs.id, tasks.programId))
-    .where(and(eq(tasks.important, true), eq(tasks.done, false), eq(programs.status, 'ACTIVE')))
+    .where(and(eq(tasks.important, true), ne(tasks.status, 'DONE'), eq(programs.status, 'ACTIVE')))
     .orderBy(asc(tasks.dueDate), asc(tasks.id));
   return rows.map(withProgram);
 }
@@ -123,7 +124,7 @@ export async function createTask(db: Db, input: TaskCreateInput): Promise<number
     dueDate: input.dueDate,
     required: true,
     important: input.important ?? false,
-    done: false,
+    status: 'TODO',
     doneAt: null,
     checklist: (input.checklist ?? []).map((text) => ({ text, checked: false })),
     notes: input.notes ?? null,
@@ -132,15 +133,16 @@ export async function createTask(db: Db, input: TaskCreateInput): Promise<number
 }
 
 export async function updateTask(db: Db, id: number, patch: TaskPatchInput): Promise<boolean> {
-  const set: Partial<typeof tasks.$inferInsert> = {};
+  const set: MySqlUpdateSetSource<typeof tasks> = {};
   if (patch.title !== undefined) set.title = patch.title;
   if (patch.dueDate !== undefined) set.dueDate = patch.dueDate;
   if (patch.notes !== undefined) set.notes = patch.notes;
   if (patch.checklist !== undefined) set.checklist = patch.checklist;
   if (patch.important !== undefined) set.important = patch.important;
-  if (patch.done !== undefined) {
-    set.done = patch.done;
-    set.doneAt = patch.done ? new Date() : null;
+  if (patch.status !== undefined) {
+    set.status = patch.status;
+    // done_at is null outside DONE, so coalesce keeps the original time on a DONE -> DONE re-save.
+    set.doneAt = patch.status === 'DONE' ? sql`coalesce(${tasks.doneAt}, current_timestamp(3))` : null;
   }
   if (Object.keys(set).length === 0) return true;
   const [res] = await db.update(tasks).set(set).where(eq(tasks.id, id));

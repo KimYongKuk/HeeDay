@@ -75,7 +75,7 @@ Month view right panel sections: **오늘**, **중요** (open starred tasks, any
 - **할 일 항목 (action item)** — reusable task definition: name, category (기획/행정/홍보/운영/정산/보고), default checklist. Shared by templates.
 - **프로그램 양식 (template)** — name, color, ordered template items. Each item = action item + required flag + optional checklist override. Order is the only scheduling hint.
 - **일정 (program)** — a template instance with name, start/end, 담당자, color, snapshot, and the tasks the user placed.
-- **할 일 (task)** — checkbox item on a date; 완료 shows strikethrough; optional checklist and notes.
+- **할 일 (task)** — item on a date with `status` `TODO`/`DOING`/`DONE` (대기/진행 중/완료, one enum column; `done_at` is set only while DONE). The status box cycles 대기 → 진행 중 (grey fill) → 완료 (program color + check, strikethrough) on each click (`TaskStatusBox`); the task popover picks one of the three directly. Optional checklist and notes.
 - **휴관일 / 공휴일** — closure days tint the day cell and show a label next to the date; in the wizard they only produce a warning tag.
 - **부재 (absence)** — a period the staff member is away (휴가/출장/기타). Amber tint + kind icon next to the date; same wizard warning treatment as closures. Managed on the same `/closures` screen, stored separately.
 

@@ -1,6 +1,7 @@
 'use client';
 
-import { Check, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
+import { TaskStatusBox } from '@/components/common/TaskStatusBox';
 import { PALETTE } from '@/lib/domain/colors';
 import type { CalendarTaskDto } from '@/lib/domain/dto';
 import { cn } from '@/lib/utils';
@@ -26,25 +27,10 @@ export function TaskChip({
       style={{ background: p.bg, color: p.text }}
       title={`${task.programName} · ${task.title}`}
     >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggle?.(task);
-        }}
-        aria-label={task.done ? '완료 취소' : '완료'}
-        aria-pressed={task.done}
-        className={cn(
-          'flex size-3.5 shrink-0 items-center justify-center rounded-[4px] border-[1.5px] border-current transition-opacity',
-          task.done ? 'opacity-100' : 'opacity-55 hover:opacity-100',
-        )}
-        style={task.done ? { background: p.text, borderColor: p.text } : undefined}
-      >
-        {task.done ? <Check className="size-2.5 text-white" strokeWidth={3} /> : null}
-      </button>
+      <TaskStatusBox status={task.status} color={p.text} onClick={() => onToggle?.(task)} />
       {task.important ? (
         <Star
-          className={cn('text-star size-3 shrink-0', task.done && 'opacity-50')}
+          className={cn('text-star size-3 shrink-0', task.status === 'DONE' && 'opacity-50')}
           fill="currentColor"
           aria-label="중요"
         />
@@ -52,8 +38,8 @@ export function TaskChip({
       <span
         className={cn(
           'truncate',
-          task.important && !task.done && 'font-semibold',
-          task.done && 'line-through opacity-60',
+          task.important && task.status !== 'DONE' && 'font-semibold',
+          task.status === 'DONE' && 'line-through opacity-60',
         )}
       >
         {showProgram ? `${task.templateName} ` : ''}

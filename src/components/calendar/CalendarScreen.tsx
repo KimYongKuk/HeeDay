@@ -21,6 +21,7 @@ import {
   useUpdateTask,
 } from '@/lib/api/queries';
 import type { CalendarTaskDto } from '@/lib/domain/dto';
+import { nextTaskStatus } from '@/lib/domain/taskStatus';
 import type { ISODate } from '@/lib/domain/types';
 import { addMonthsISO, monthGrid, timelineWindow, weekOf } from '@/lib/services/calendarLayout';
 import { absenceByDate } from '@/lib/services/placement';
@@ -86,7 +87,10 @@ export function CalendarScreen() {
   const onToggle = useCallback(
     async (task: CalendarTaskDto) => {
       try {
-        await update.mutateAsync({ id: task.id, patch: { done: !task.done } });
+        await update.mutateAsync({
+          id: task.id,
+          patch: { status: nextTaskStatus(task.status) },
+        });
       } catch (err) {
         toast.error(err instanceof ApiClientError ? err.message : '변경에 실패했습니다.');
       }

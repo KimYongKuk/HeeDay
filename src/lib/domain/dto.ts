@@ -1,4 +1,4 @@
-import type { AbsenceKind, ClosureKind, ColorKey, ProgramStatus } from './enums';
+import type { AbsenceKind, ClosureKind, ColorKey, ProgramStatus, TaskStatus } from './enums';
 import type { ChecklistItem, ISODate, TemplateSnapshot } from './types';
 
 export interface CategoryDto {
@@ -76,7 +76,8 @@ export interface TaskDto {
   dueDate: ISODate;
   required: boolean;
   important: boolean;
-  done: boolean;
+  status: TaskStatus;
+  /** Set when status becomes DONE, cleared when it leaves DONE. */
   doneAt: string | null;
   checklist: ChecklistItem[];
   notes: string | null;

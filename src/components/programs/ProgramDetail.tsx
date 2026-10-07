@@ -1,12 +1,13 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Archive, ArchiveRestore, Check, Pencil, Star, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, Pencil, Star, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/common/EmptyState';
+import { TaskStatusBox } from '@/components/common/TaskStatusBox';
 import { Button } from '@/components/ui/button';
 import { ApiClientError, api } from '@/lib/api/client';
 import { MemoComposer, MemoList } from '@/components/memos/MemoList';
@@ -14,6 +15,7 @@ import { ProgramEditDialog } from '@/components/programs/ProgramEditDialog';
 import { useDeleteProgram, useMemos, useProgram, useUpdateTask } from '@/lib/api/queries';
 import { PALETTE } from '@/lib/domain/colors';
 import type { TaskDto } from '@/lib/domain/dto';
+import { nextTaskStatus } from '@/lib/domain/taskStatus';
 import { cn } from '@/lib/utils';
 import { formatFullKo, formatMonthDayKo } from '@/lib/utils/dates';
 
@@ -33,7 +35,7 @@ export function ProgramDetail({ id }: { id: number }) {
 
   const toggle = async (t: TaskDto) => {
     try {
-      await update.mutateAsync({ id: t.id, patch: { done: !t.done } });
+      await update.mutateAsync({ id: t.id, patch: { status: nextTaskStatus(t.status) } });
       qc.invalidateQueries({ queryKey: ['programs', id] });
     } catch (err) {
       toast.error(err instanceof ApiClientError ? err.message : '변경에 실패했습니다.');
@@ -142,25 +144,10 @@ export function ProgramDetail({ id }: { id: number }) {
                     {formatMonthDayKo(t.dueDate)}
                   </span>
                   <div className="flex min-w-0 items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => toggle(t)}
-                      aria-label={t.done ? '완료 취소' : '완료'}
-                      className={cn(
-                        'flex size-3.5 shrink-0 items-center justify-center rounded-[4px] border-[1.5px]',
-                        t.done ? 'text-white' : 'opacity-60',
-                      )}
-                      style={
-                        t.done
-                          ? { background: pal.text, borderColor: pal.text }
-                          : { borderColor: pal.text, color: pal.text }
-                      }
-                    >
-                      {t.done ? <Check className="size-2.5" strokeWidth={3} /> : null}
-                    </button>
+                    <TaskStatusBox status={t.status} color={pal.text} onClick={() => toggle(t)} />
                     {t.important ? (
                       <Star
-                        className={cn('text-star size-3 shrink-0', t.done && 'opacity-50')}
+                        className={cn('text-star size-3 shrink-0', t.status === 'DONE' && 'opacity-50')}
                         fill="currentColor"
                         aria-label="중요"
                       />
@@ -168,8 +155,8 @@ export function ProgramDetail({ id }: { id: number }) {
                     <span
                       className={cn(
                         'truncate',
-                        t.important && !t.done && 'font-semibold',
-                        t.done && 'text-ink-faint line-through',
+                        t.important && t.status !== 'DONE' && 'font-semibold',
+                        t.status === 'DONE' && 'text-ink-faint line-through',
                       )}
                     >
                       {t.title}

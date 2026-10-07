@@ -1,9 +1,10 @@
 'use client';
 
-import { Check, Plus, Star } from 'lucide-react';
+import { Plus, Star } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { AbsenceBadge, type AbsenceMark } from '@/components/calendar/AbsenceBadge';
+import { TaskStatusBox } from '@/components/common/TaskStatusBox';
 import { MemoComposer } from '@/components/memos/MemoList';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useMemos } from '@/lib/api/queries';
@@ -25,30 +26,15 @@ function Row({
   const p = PALETTE[task.programColor];
   return (
     <div className="border-hairline flex h-[34px] items-center gap-2.5 border-t text-[13.5px] first:border-t-0">
-      <button
-        type="button"
-        onClick={() => onToggle?.(task)}
-        aria-label={task.done ? '완료 취소' : '완료'}
-        className={cn(
-          'flex size-3.5 shrink-0 items-center justify-center rounded-[4px] border-[1.5px]',
-          task.done ? 'text-white' : 'opacity-60 hover:opacity-100',
-        )}
-        style={
-          task.done
-            ? { background: p.text, borderColor: p.text }
-            : { borderColor: p.text, color: p.text }
-        }
-      >
-        {task.done ? <Check className="size-2.5" strokeWidth={3} /> : null}
-      </button>
+      <TaskStatusBox status={task.status} color={p.text} onClick={() => onToggle?.(task)} />
       {task.important ? (
         <Star className="text-star size-3 shrink-0" fill="currentColor" aria-label="중요" />
       ) : null}
       <span
         className={cn(
           'truncate',
-          task.important && !task.done && 'font-semibold',
-          task.done && 'text-ink-faint line-through',
+          task.important && task.status !== 'DONE' && 'font-semibold',
+          task.status === 'DONE' && 'text-ink-faint line-through',
         )}
       >
         {task.title}
@@ -126,7 +112,7 @@ export function RightPanel({
   const [, m, d] = today.split('-').map(Number);
   const todaySorted = [...todayTasks].sort(compareDayTasks);
   const upcoming = weekTasks
-    .filter((t) => t.dueDate > today && !t.done)
+    .filter((t) => t.dueDate > today && t.status !== 'DONE')
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate) || compareDayTasks(a, b))
     .slice(0, 8);
   const important = importantTasks.slice(0, 10);

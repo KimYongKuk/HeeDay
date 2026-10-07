@@ -320,7 +320,7 @@ export function useUpdateTask() {
     onMutate: async ({ id, patch }) => {
       await qc.cancelQueries({ queryKey: ['tasks'] });
       const optimistic: Partial<CalendarTaskDto> = { ...patch };
-      if (patch.done !== undefined) optimistic.doneAt = patch.done ? new Date().toISOString() : null;
+      if (patch.status !== undefined && patch.status !== 'DONE') optimistic.doneAt = null;
       return { previous: patchTaskCaches(qc, id, optimistic) };
     },
     onError: (_err, _vars, ctx) => restoreTaskCaches(qc, ctx?.previous),

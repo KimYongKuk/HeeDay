@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { isISODate } from '@/lib/utils/dates';
-import { ABSENCE_KINDS, CLOSURE_KINDS, COLOR_KEYS, PROGRAM_STATUSES } from './enums';
+import { ABSENCE_KINDS, CLOSURE_KINDS, COLOR_KEYS, PROGRAM_STATUSES, TASK_STATUSES } from './enums';
 
 export const isoDateSchema = z
   .string()
@@ -107,7 +107,7 @@ export type TaskCreateInput = z.infer<typeof taskCreateSchema>;
 export const taskPatchSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
   dueDate: isoDateSchema.optional(),
-  done: z.boolean().optional(),
+  status: z.enum(TASK_STATUSES).optional(),
   important: z.boolean().optional(),
   checklist: z.array(checklistItemSchema).max(50).optional(),
   notes: z.string().trim().max(2000).nullable().optional(),

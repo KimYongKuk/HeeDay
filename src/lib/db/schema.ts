@@ -12,7 +12,7 @@ import {
   uniqueIndex,
   varchar,
 } from 'drizzle-orm/mysql-core';
-import { ABSENCE_KINDS, CLOSURE_KINDS, COLOR_KEYS, PROGRAM_STATUSES } from '@/lib/domain/enums';
+import { ABSENCE_KINDS, CLOSURE_KINDS, COLOR_KEYS, PROGRAM_STATUSES, TASK_STATUSES } from '@/lib/domain/enums';
 import type { ChecklistItem, TemplateSnapshot } from '@/lib/domain/types';
 
 const timestamps = {
@@ -123,7 +123,7 @@ export const tasks = mysqlTable(
     required: boolean('required').notNull().default(true),
     /** 놓치면 안 되는 일. Starred on the calendar and gathered in the right panel. */
     important: boolean('important').notNull().default(false),
-    done: boolean('done').notNull().default(false),
+    status: mysqlEnum('status', TASK_STATUSES).notNull().default('TODO'),
     doneAt: datetime('done_at', { fsp: 3 }),
     checklist: json('checklist').$type<ChecklistItem[]>().notNull(),
     notes: text('notes'),
@@ -132,8 +132,8 @@ export const tasks = mysqlTable(
   (t) => [
     index('idx_tasks_due').on(t.dueDate),
     index('idx_tasks_program_due').on(t.programId, t.dueDate),
-    index('idx_tasks_done_due').on(t.done, t.dueDate),
-    index('idx_tasks_important').on(t.important, t.done, t.dueDate),
+    index('idx_tasks_status_due').on(t.status, t.dueDate),
+    index('idx_tasks_important').on(t.important, t.status, t.dueDate),
   ],
 );
 

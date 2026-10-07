@@ -8,19 +8,20 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiClientError } from '@/lib/api/client';
 import { useDeleteTask, useUpdateTask } from '@/lib/api/queries';
 import { PALETTE } from '@/lib/domain/colors';
 import type { CalendarTaskDto } from '@/lib/domain/dto';
+import { TASK_STATUSES, type TaskStatus } from '@/lib/domain/enums';
+import { TASK_STATUS_LABEL } from '@/lib/domain/labels';
 import type { ChecklistItem, ISODate } from '@/lib/domain/types';
 import { cn } from '@/lib/utils';
 
 interface Draft {
   title: string;
   dueDate: ISODate;
-  done: boolean;
+  status: TaskStatus;
   important: boolean;
   checklist: ChecklistItem[];
   notes: string;
@@ -30,7 +31,7 @@ function fromTask(t: CalendarTaskDto): Draft {
   return {
     title: t.title,
     dueDate: t.dueDate,
-    done: t.done,
+    status: t.status,
     important: t.important,
     checklist: t.checklist.map((c) => ({ ...c })),
     notes: t.notes ?? '',
@@ -67,7 +68,7 @@ function TaskEditor({ task, onClose }: { task: CalendarTaskDto; onClose: () => v
         patch: {
           title: d.title.trim(),
           dueDate: d.dueDate,
-          done: d.done,
+          status: d.status,
           important: d.important,
           checklist: d.checklist
             .map((c) => ({ text: c.text.trim(), checked: c.checked }))
@@ -128,16 +129,44 @@ function TaskEditor({ task, onClose }: { task: CalendarTaskDto; onClose: () => v
             <Star className="size-4" fill={d.important ? 'currentColor' : 'none'} />
           </button>
         </div>
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-          <DateField
-            value={d.dueDate}
-            onChange={(dueDate) => setD({ ...d, dueDate })}
-            className="w-full"
-          />
-          <label className="text-ink-soft flex items-center gap-2 text-[12.5px]">
-            <Switch size="sm" checked={d.done} onCheckedChange={(done) => setD({ ...d, done })} />
-            완료
-          </label>
+        <DateField
+          value={d.dueDate}
+          onChange={(dueDate) => setD({ ...d, dueDate })}
+          className="w-full"
+        />
+        <div
+          role="radiogroup"
+          aria-label="상태"
+          className="border-line bg-app grid grid-cols-3 gap-0.5 rounded-lg border p-0.5"
+        >
+          {TASK_STATUSES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              role="radio"
+              aria-checked={d.status === s}
+              onClick={() => setD({ ...d, status: s })}
+              className={cn(
+                'flex h-7 items-center justify-center gap-1.5 rounded-md text-[12.5px] font-medium',
+                d.status === s ? 'bg-surface text-ink shadow-xs' : 'text-ink-faint hover:text-ink',
+              )}
+            >
+              <span
+                className={cn(
+                  'size-2.5 rounded-[3px] border-[1.5px]',
+                  s === 'DOING' && 'border-ink-ghost bg-ink-ghost',
+                )}
+                style={
+                  s === 'DONE'
+                    ? { background: p.text, borderColor: p.text }
+                    : s === 'TODO'
+                      ? { borderColor: p.text }
+                      : undefined
+                }
+              />
+              {TASK_STATUS_LABEL[s]}
+            </button>
+          ))}
         </div>
 
         <div>

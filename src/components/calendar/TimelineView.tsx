@@ -133,7 +133,7 @@ export function TimelineView({
                         <span
                           className={cn(
                             'block size-2 rotate-45 rounded-[2px]',
-                            t.done && 'opacity-40',
+                            t.status === 'DONE' && 'opacity-40',
                           )}
                           style={{ background: pal.solid }}
                         />
@@ -141,8 +141,8 @@ export function TimelineView({
                           <span
                             className={cn(
                               'flex items-center gap-0.5 whitespace-nowrap',
-                              t.important && !t.done && 'text-ink font-semibold',
-                              t.done && 'text-ink-ghost line-through',
+                              t.important && t.status !== 'DONE' && 'text-ink font-semibold',
+                              t.status === 'DONE' && 'text-ink-ghost line-through',
                             )}
                           >
                             {t.important ? (

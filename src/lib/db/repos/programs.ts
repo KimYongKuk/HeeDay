@@ -15,7 +15,7 @@ interface Counts {
 
 const countColumns = {
   taskCount: sql<number>`count(${tasks.id})`,
-  doneCount: sql<number>`coalesce(sum(case when ${tasks.done} = 1 then 1 else 0 end), 0)`,
+  doneCount: sql<number>`coalesce(sum(case when ${tasks.status} = 'DONE' then 1 else 0 end), 0)`,
   firstTaskDate: sql<string | null>`min(${tasks.dueDate})`,
   lastTaskDate: sql<string | null>`max(${tasks.dueDate})`,
 };

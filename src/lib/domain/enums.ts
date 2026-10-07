@@ -4,6 +4,10 @@ export type ColorKey = (typeof COLOR_KEYS)[number];
 export const PROGRAM_STATUSES = ['ACTIVE', 'ARCHIVED'] as const;
 export type ProgramStatus = (typeof PROGRAM_STATUSES)[number];
 
+/** 대기 · 진행 중 · 완료 */
+export const TASK_STATUSES = ['TODO', 'DOING', 'DONE'] as const;
+export type TaskStatus = (typeof TASK_STATUSES)[number];
+
 export const CLOSURE_KINDS = ['PUBLIC_HOLIDAY', 'SUBSTITUTE', 'CENTER'] as const;
 export type ClosureKind = (typeof CLOSURE_KINDS)[number];
 

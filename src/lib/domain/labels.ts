@@ -1,4 +1,10 @@
-import type { AbsenceKind, ClosureKind } from './enums';
+import type { AbsenceKind, ClosureKind, TaskStatus } from './enums';
+
+export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
+  TODO: '대기',
+  DOING: '진행 중',
+  DONE: '완료',
+};
 
 export const CLOSURE_KIND_LABEL: Record<ClosureKind, string> = {
   PUBLIC_HOLIDAY: '공휴일',

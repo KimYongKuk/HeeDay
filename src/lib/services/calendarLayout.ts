@@ -2,17 +2,19 @@
  * Pure layout helpers for the month view: grid construction, program lane assignment,
  * and per-week segment clipping. No React, no DB.
  */
+import type { TaskStatus } from '@/lib/domain/enums';
+import { taskStatusRank } from '@/lib/domain/taskStatus';
 import type { ISODate } from '@/lib/domain/types';
 import { addDaysISO, compareISO, toEpochDay, weekdayISO } from '@/lib/utils/dates';
 
 /** Monday-start week containing `date`. */
-/** Order inside one day cell: undone before done, 중요 first within each, then insertion order. */
+/** Order inside one day cell: 진행 중, 대기, 완료; 중요 first within each, then insertion order. */
 export function compareDayTasks(
-  a: { done: boolean; important: boolean; id: number },
-  b: { done: boolean; important: boolean; id: number },
+  a: { status: TaskStatus; important: boolean; id: number },
+  b: { status: TaskStatus; important: boolean; id: number },
 ): number {
   return (
-    Number(a.done) - Number(b.done) || Number(b.important) - Number(a.important) || a.id - b.id
+    taskStatusRank(a) - taskStatusRank(b) || Number(b.important) - Number(a.important) || a.id - b.id
   );
 }
 
