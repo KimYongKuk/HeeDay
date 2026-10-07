@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ArrowUp, Check, Copy, Loader2, MessageCircle, RotateCcw, Square, X } from 'lucide-react';
+import { ArrowUp, Check, Copy, Loader2, Maximize2, MessageCircle, Minimize2, RotateCcw, Square, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { LogoMark } from '@/components/shell/Logo';
@@ -49,6 +49,8 @@ function AssistantPanel({ onClose }: { onClose: () => void }) {
   const busy = useAssistantStore((s) => s.busy);
   const awaiting = useAssistantStore((s) => s.awaiting);
   const transcriptLength = useAssistantStore((s) => s.transcript.length);
+  const expanded = useAssistantStore((s) => s.expanded);
+  const setExpanded = useAssistantStore((s) => s.setExpanded);
   const { send, decide, undo, stop, reset } = useAssistant();
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -100,12 +102,28 @@ function AssistantPanel({ onClose }: { onClose: () => void }) {
   return (
     <section
       aria-label="AI 도우미"
-      className="bg-surface border-line fixed inset-0 z-50 flex flex-col md:inset-auto md:right-6 md:bottom-6 md:h-[min(640px,calc(100dvh-96px))] md:w-[400px] md:rounded-2xl md:border md:shadow-2xl"
+      className={cn(
+        'bg-surface border-line fixed inset-0 z-50 flex flex-col md:inset-auto md:rounded-2xl md:border md:shadow-2xl',
+        // Expanded keeps the bottom-right anchor and grows up to the window's top-right corner.
+        expanded
+          ? 'md:top-4 md:right-4 md:bottom-4 md:w-[min(760px,calc(100vw-32px))]'
+          : 'md:right-6 md:bottom-6 md:h-[min(640px,calc(100dvh-96px))] md:w-[400px]',
+      )}
     >
       <header className="border-line flex h-12 shrink-0 items-center gap-2 border-b px-3">
         <LogoMark className="size-6" />
         <h2 className="text-[14px] font-semibold">히데이 도우미</h2>
         <div className="ml-auto flex items-center gap-1">
+          <button
+            type="button"
+            title={expanded ? '작게 보기' : '크게 보기'}
+            aria-label={expanded ? '작게 보기' : '크게 보기'}
+            aria-pressed={expanded}
+            onClick={() => setExpanded(!expanded)}
+            className="text-ink-muted hover:bg-app hover:text-ink hidden size-8 items-center justify-center rounded-lg md:flex"
+          >
+            {expanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </button>
           <button
             type="button"
             title="새 대화"

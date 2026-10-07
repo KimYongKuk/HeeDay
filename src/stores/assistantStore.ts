@@ -36,6 +36,8 @@ export type ChatItem =
 
 interface AssistantState {
   open: boolean;
+  /** Desktop only: panel grows to the top-right corner of the window. */
+  expanded: boolean;
   busy: boolean;
   /** Provider messages, append-only, sent back with every request. */
   transcript: TranscriptMessage[];
@@ -46,6 +48,7 @@ interface AssistantState {
   notices: string[];
 
   setOpen: (open: boolean) => void;
+  setExpanded: (expanded: boolean) => void;
   setBusy: (busy: boolean) => void;
   appendTranscript: (m: TranscriptMessage) => void;
   pushItem: (item: ChatItem) => void;
@@ -62,9 +65,11 @@ export const useAssistantStore = create<AssistantState>()(
   persist(
     (set, get) => ({
       open: false,
+      expanded: false,
       busy: false,
       ...empty,
       setOpen: (open) => set({ open }),
+      setExpanded: (expanded) => set({ expanded }),
       setBusy: (busy) => set({ busy }),
       appendTranscript: (m) => set((s) => ({ transcript: [...s.transcript, m] })),
       pushItem: (item) => set((s) => ({ items: [...s.items, item] })),
@@ -83,7 +88,13 @@ export const useAssistantStore = create<AssistantState>()(
       // Session only: a closed tab ends the conversation. `open` and `busy` are not restored.
       name: 'heeday.assistant.v1',
       storage: createJSONStorage(() => sessionStorage),
-      partialize: (s) => ({ transcript: s.transcript, items: s.items, awaiting: s.awaiting, notices: s.notices }),
+      partialize: (s) => ({
+        transcript: s.transcript,
+        items: s.items,
+        awaiting: s.awaiting,
+        notices: s.notices,
+        expanded: s.expanded,
+      }),
     },
   ),
 );
