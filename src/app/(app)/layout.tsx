@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { AssistantWidget } from '@/components/assistant/AssistantWidget';
 import { CommandPalette } from '@/components/shell/CommandPalette';
 import { MobileNav } from '@/components/shell/MobileNav';
 import { QueryProvider } from '@/components/shell/QueryProvider';
@@ -20,7 +21,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </div>
       <MobileNav />
       <CommandPalette />
-      <Toaster position="bottom-right" />
+      <AssistantWidget />
+      {/* bottom-center: the bottom-right corner belongs to the AI 도우미 button */}
+      <Toaster position="bottom-center" />
     </QueryProvider>
   );
 }

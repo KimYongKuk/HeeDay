@@ -2,12 +2,22 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import type { AiStatus } from '@/lib/ai/config';
 
 interface Health {
   ok: boolean;
   db: 'up' | 'down';
   latencyMs?: number;
+  ai?: AiStatus;
   time: string;
+}
+
+function aiLabel(ai: AiStatus | undefined, loading: boolean): string {
+  if (loading) return '확인 중';
+  if (!ai) return '-';
+  if (ai.state === 'ready') return `키 설정됨 (${ai.model}, ${ai.region})`;
+  if (ai.state === 'disabled') return '꺼짐 (HEEDAY_AI_ENABLED=0)';
+  return `키 없음: ${ai.missing.join(', ')}`;
 }
 
 export function SettingsScreen() {
@@ -51,6 +61,13 @@ export function SettingsScreen() {
               : health.data?.ok
                 ? `정상 (${health.data.latencyMs}ms)`
                 : '연결 실패'}
+          </dd>
+          <dt className="text-ink-faint">AI 도우미</dt>
+          <dd className="flex items-center gap-2">
+            <span
+              className={`size-2 rounded-full ${health.data?.ai?.state === 'ready' ? 'bg-[#4faa72]' : 'bg-ink-ghost'}`}
+            />
+            {aiLabel(health.data?.ai, health.isLoading)}
           </dd>
           <dt className="text-ink-faint">서버 시간</dt>
           <dd>
